@@ -15,7 +15,7 @@
    practice dataset -> a short tie-in to Tu Idea en 3D's lead-scoring goal.
    Color: --bg/--panel/--ink/--ink-soft/--line neutral (cool, blue-biased)
           --accent navy (the course deck's own title blue)
-          --tp/--fn/--fp/--tn: the four quadrant colors Hugo's slides use
+          --tp/--fn/--fp/--tn: the four quadrant colors from the course's own convention
    Type: Fraunces (display, numerals) / IBM Plex Sans (body) / IBM Plex Mono (data)
 */
 :root{
@@ -189,21 +189,60 @@ section{display:flex; flex-direction:column; gap:16px}
 .link-chip:hover{text-decoration:underline}
 
 footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wrap:wrap; gap:8px 18px; justify-content:space-between; color:var(--ink-faint); font-size:12.5px}
+
+/* ---- import ---- */
+.dropzone{border:1.5px dashed var(--line); border-radius:12px; padding:22px; text-align:center; cursor:pointer; background:var(--panel)}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent); background:var(--accent-soft)}
+.dropzone input{display:none}
+.dropzone .dz-title{font-weight:600; font-size:14px}
+.dropzone .dz-sub{color:var(--ink-faint); font-size:12.5px; margin-top:4px}
+.grid-import{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+@media (max-width:720px){ .grid-import{grid-template-columns:1fr} }
+.field{display:flex; flex-direction:column; gap:5px; min-width:0}
+.field label{font-size:12px; color:var(--ink-soft); font-weight:500}
+select{
+  font-family:var(--font-mono); font-size:13px; padding:8px 10px; border-radius:8px;
+  border:1px solid var(--line); background:var(--panel); color:var(--ink); width:100%;
+}
+.import-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+button.btn{
+  font-family:var(--font-body); font-size:13.5px; font-weight:600; border-radius:999px;
+  border:1px solid var(--line); background:var(--panel); color:var(--ink); padding:9px 16px; cursor:pointer;
+}
+button.btn:hover{border-color:var(--accent)}
+button.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="hero">
-    <span class="eyebrow">Marketing Analytics · Hugo Martínez Gallego</span>
+    <span class="eyebrow">Marketing Analytics · Clasificación</span>
     <h1>Laboratorio de Matriz de Confusión</h1>
-    <p>Elige un caso, edita la matriz 2×2 y mira cómo se recalculan exactitud, precisión, exhaustividad, F1 y la tasa de error — con las mismas fórmulas y el mismo convenio de colores del curso.</p>
+    <p>Importa tus propios datos o elige un caso, edita la matriz 2×2 y mira cómo se recalculan exactitud, precisión, exhaustividad, F1 y la tasa de error — con las mismas fórmulas y el mismo convenio de colores del curso.</p>
     <div class="meta">
+      <span><span class="dot"></span>Importa CSV/Excel/JSON</span>
       <span><span class="dot"></span>TP/FN/FP/TN editables</span>
       <span><span class="dot"></span>9 casos precargados</span>
-      <span><span class="dot"></span>ejercicio de regla sobre datos de práctica</span>
     </div>
   </div>
+
+  <section class="import">
+    <div class="section-head">
+      <h2>0 · Importar tus datos (opcional)</h2>
+      <p>Sube un archivo con una columna de clase real (dos valores, ej. "Sí/No") y, si la tienes, una columna de predicción —para armar la matriz directo— o una columna numérica —para correr el ejercicio de regla de la sección 3 sobre tus propios registros—. Si no subes nada, se usan los 9 casos precargados y los 12 registros de práctica de más abajo.</p>
+    </div>
+    <div class="panel">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,.xlsm,.ods">
+        <div class="dz-title">Arrastra un archivo o haz clic para elegirlo</div>
+        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods</div>
+      </label>
+      <div id="importStatus" class="note" style="margin-top:12px;">Sin archivo cargado — usando los 9 casos precargados y los 12 registros de práctica de la sección 3.</div>
+      <div class="grid-import" id="importSelects" style="display:none; margin-top:14px;"></div>
+      <div class="import-actions" id="importActions" style="display:none;"></div>
+    </div>
+  </section>
 
   <section class="presets">
     <div class="section-head">
@@ -241,18 +280,18 @@ footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wr
   <section class="exercise">
     <div class="section-head">
       <h2>3 · Ejercicio: clasifica con una regla simple</h2>
-      <p>12 registros de práctica (edad, saldo, satisfecho) de la hoja de ejercicios del curso. Mueve el umbral de saldo — es exactamente la Fase 1 de CRISP-DM de Tu Idea en 3D (reglas de negocio antes de entrenar un modelo, sección 4.1): predice "satisfecho = 1" cuando el saldo supera el umbral, y mira la matriz de confusión resultante.</p>
+      <p id="exerciseDesc">12 registros de práctica (edad, saldo, satisfecho) de la hoja de ejercicios del curso. Mueve el umbral de saldo — es exactamente la Fase 1 de CRISP-DM de Tu Idea en 3D (reglas de negocio antes de entrenar un modelo, sección 4.1): predice "satisfecho = 1" cuando el saldo supera el umbral, y mira la matriz de confusión resultante.</p>
     </div>
     <div class="panel">
       <div class="exercise-body">
         <div>
           <div class="rule-control">
-            <span class="rtitle">Regla: predicho = 1 si saldo ≥ umbral</span>
+            <span class="rtitle" id="ruleTitle">Regla: predicho = 1 si saldo ≥ umbral</span>
             <input type="range" id="thresholdSlider" min="-100" max="4200" step="25" value="500">
-            <span class="rule-readout">umbral = $<span id="thresholdValue" class="num"></span></span>
+            <span class="rule-readout" id="ruleReadout">umbral = $<span id="thresholdValue" class="num"></span></span>
           </div>
           <table class="data-table">
-            <thead><tr><th>Edad</th><th>Saldo</th><th>Real</th><th>Predicho</th><th>Resultado</th></tr></thead>
+            <thead id="dataTableHead"><tr><th>Edad</th><th>Saldo</th><th>Real</th><th>Predicho</th><th>Resultado</th></tr></thead>
             <tbody id="dataTableBody"></tbody>
           </table>
         </div>
@@ -277,11 +316,13 @@ footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wr
 
   <footer>
     <span>Tu Idea en 3D · Marketing Analytics</span>
-    <span>Datos de clase: Hugo Martínez Gallego — matrizdeconfusion.xlsx</span>
+    <span>Material de clase: matrizdeconfusion.xlsx</span>
   </footer>
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -314,7 +355,7 @@ footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wr
       note:"Reconstruido a partir de la exactitud (80,5%), precisión (74,9%) y recall (74,3%) ya reportados en la sección 4.4 del documento CRISP-DM — el notebook no guardó los conteos TP/FP/FN/TN exactos en esta sesión; estas cifras los reproducen de forma consistente, no son el dato original." }
   ];
 
-  var PRACTICE = [
+  var PRACTICE_DEFAULT = [
     {edad:30, saldo:1787, real:1},
     {edad:33, saldo:4108, real:0},
     {edad:35, saldo:1350, real:1},
@@ -329,7 +370,14 @@ footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wr
     {edad:43, saldo:264,  real:0}
   ];
 
-  var state = { current: JSON.parse(JSON.stringify(PRESETS[3])) };
+  var state = {
+    current: JSON.parse(JSON.stringify(PRESETS[3])),
+    practice: PRACTICE_DEFAULT.slice(),
+    idKey: "edad", idLabel: "Edad",
+    ruleKey: "saldo", ruleLabel: "Saldo", ruleUnit: "$",
+    ruleMin: -100, ruleMax: 4200, ruleStep: 25, ruleDefault: 500,
+    imported: null
+  };
 
   function fmt(n){
     if (!isFinite(n)) return "—";
@@ -526,50 +574,57 @@ footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wr
   }
 
   // ---------- exercise ----------
-  function renderExercise(){
+  function renderExerciseShell(){
+    var slider = document.getElementById("thresholdSlider");
+    slider.min = state.ruleMin; slider.max = state.ruleMax; slider.step = state.ruleStep;
+    if (slider.value < state.ruleMin || slider.value > state.ruleMax || !state._touched) slider.value = state.ruleDefault;
+    document.getElementById("ruleTitle").textContent = "Regla: predicho = 1 si " + state.ruleLabel.toLowerCase() + " ≥ umbral";
+    document.getElementById("dataTableHead").innerHTML =
+      "<tr><th>" + esc(state.idLabel) + "</th><th>" + esc(state.ruleLabel) + "</th><th>Real</th><th>Predicho</th><th>Resultado</th></tr>";
+    updateExercise();
+  }
+
+  function updateExercise(){
     var slider = document.getElementById("thresholdSlider");
     var valueEl = document.getElementById("thresholdValue");
     var body = document.getElementById("dataTableBody");
     var panel = document.getElementById("exercisePanel");
+    var unit = state.ruleUnit || "";
 
-    function update(){
-      var threshold = parseFloat(slider.value);
-      valueEl.textContent = fmt(threshold);
-      body.innerHTML = "";
-      var tp=0, fn=0, fp=0, tn=0;
-      PRACTICE.forEach(function(row){
-        var pred = row.saldo >= threshold ? 1 : 0;
-        var kind;
-        if (row.real === 1 && pred === 1){ kind="tp"; tp++; }
-        else if (row.real === 1 && pred === 0){ kind="fn"; fn++; }
-        else if (row.real === 0 && pred === 1){ kind="fp"; fp++; }
-        else { kind="tn"; tn++; }
-        var tr = document.createElement("tr");
-        tr.innerHTML =
-          "<td>" + row.edad + "</td>" +
-          "<td>$" + fmt(row.saldo) + "</td>" +
-          "<td>" + row.real + "</td>" +
-          "<td>" + pred + "</td>" +
-          "<td><span class=\"badge " + kind + "\">" + kind.toUpperCase() + "</span></td>";
-        body.appendChild(tr);
-      });
+    var threshold = parseFloat(slider.value);
+    valueEl.textContent = fmt(threshold);
+    body.innerHTML = "";
+    var tp=0, fn=0, fp=0, tn=0;
+    state.practice.forEach(function(row){
+      var v = row[state.ruleKey];
+      var pred = v >= threshold ? 1 : 0;
+      var kind;
+      if (row.real === 1 && pred === 1){ kind="tp"; tp++; }
+      else if (row.real === 1 && pred === 0){ kind="fn"; fn++; }
+      else if (row.real === 0 && pred === 1){ kind="fp"; fp++; }
+      else { kind="tn"; tn++; }
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + esc(row[state.idKey] === undefined ? "—" : row[state.idKey]) + "</td>" +
+        "<td>" + unit + fmt(v) + "</td>" +
+        "<td>" + row.real + "</td>" +
+        "<td>" + pred + "</td>" +
+        "<td><span class=\"badge " + kind + "\">" + kind.toUpperCase() + "</span></td>";
+      body.appendChild(tr);
+    });
 
-      var met = computeMetrics({tp:tp, fn:fn, fp:fp, tn:tn});
-      panel.innerHTML =
-        "<div class=\"stat-tiles\">" +
-          "<div class=\"stat-tile\"><span class=\"label\">Accuracy</span><span class=\"value num\">" + pct(met.acc) + "</span></div>" +
-          "<div class=\"stat-tile\"><span class=\"label\">Error Rate</span><span class=\"value num\">" + pct(met.oer) + "</span></div>" +
-        "</div>" +
-        "<div class=\"metric-row\" style=\"margin-top:10px\"><span class=\"mname\">Precisión (satisfecho = 1)</span>" +
-          "<span class=\"mformula\">TP/(TP+FP) = " + tp + "/(" + tp + "+" + fp + ")</span>" +
-          "<span class=\"mvalue\">" + pct(met.precPos) + "</span></div>" +
-        "<div class=\"metric-row\"><span class=\"mname\">Exhaustividad (satisfecho = 1)</span>" +
-          "<span class=\"mformula\">TP/(TP+FN) = " + tp + "/(" + tp + "+" + fn + ")</span>" +
-          "<span class=\"mvalue\">" + pct(met.recPos) + "</span></div>";
-    }
-
-    slider.addEventListener("input", update);
-    update();
+    var met = computeMetrics({tp:tp, fn:fn, fp:fp, tn:tn});
+    panel.innerHTML =
+      "<div class=\"stat-tiles\">" +
+        "<div class=\"stat-tile\"><span class=\"label\">Accuracy</span><span class=\"value num\">" + pct(met.acc) + "</span></div>" +
+        "<div class=\"stat-tile\"><span class=\"label\">Error Rate</span><span class=\"value num\">" + pct(met.oer) + "</span></div>" +
+      "</div>" +
+      "<div class=\"metric-row\" style=\"margin-top:10px\"><span class=\"mname\">Precisión (real = 1)</span>" +
+        "<span class=\"mformula\">TP/(TP+FP) = " + tp + "/(" + tp + "+" + fp + ")</span>" +
+        "<span class=\"mvalue\">" + pct(met.precPos) + "</span></div>" +
+      "<div class=\"metric-row\"><span class=\"mname\">Exhaustividad (real = 1)</span>" +
+        "<span class=\"mformula\">TP/(TP+FN) = " + tp + "/(" + tp + "+" + fn + ")</span>" +
+        "<span class=\"mvalue\">" + pct(met.recPos) + "</span></div>";
   }
 
   function renderAll(){
@@ -578,8 +633,222 @@ footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wr
     renderMetrics();
   }
 
+  /* ================= IMPORTAR DATOS ================= */
+  function detectColumns(rows){
+    var cols = Object.keys(rows[0] || {});
+    var numeric = [], binary = [];
+    cols.forEach(function(c){
+      var vals = rows.map(function(r){ return r[c]; }).filter(function(v){ return v!==null && v!==undefined && v!==""; });
+      if (!vals.length) return;
+      var numCount = vals.filter(function(v){ return typeof v === "number" && isFinite(v); }).length;
+      if (numCount/vals.length >= 0.8) numeric.push(c);
+      var distinct = Array.from(new Set(vals.map(function(v){ return String(v).trim(); })));
+      if (distinct.length === 2) binary.push({ col:c, values:distinct });
+    });
+    return { cols:cols, numeric:numeric, binary:binary };
+  }
+
+  function showImportStatus(msg, isWarn){
+    var el = document.getElementById("importStatus");
+    el.textContent = msg;
+    el.className = "note" + (isWarn ? " warn" : "");
+  }
+
+  function onFileParsed(rows, filename){
+    rows = (rows||[]).filter(function(r){ return r && Object.keys(r).length; });
+    if (!rows.length){ showImportStatus("El archivo \"" + filename + "\" no tiene filas reconocibles.", true); return; }
+    var det = detectColumns(rows);
+    if (!det.binary.length){ showImportStatus("No encontré ninguna columna con exactamente 2 valores distintos en \"" + filename + "\" — se necesita una columna de clase real binaria (ej. Sí/No, 0/1).", true); return; }
+    state.imported = { rows:rows, filename:filename, det:det };
+    showImportStatus(rows.length + " filas cargadas de \"" + filename + "\" · " + det.binary.length + " columna(s) binaria(s) detectada(s).", false);
+    renderImportSelects();
+  }
+
+  function parseFile(file){
+    var name = file.name || "archivo";
+    var ext = (name.split(".").pop()||"").toLowerCase();
+    if (ext === "json"){
+      var r1 = new FileReader();
+      r1.onload = function(e){
+        try{ var data = JSON.parse(e.target.result); onFileParsed(Array.isArray(data)?data:(data.rows||data.data||[]), name); }
+        catch(err){ showImportStatus("No se pudo leer el JSON: " + err.message, true); }
+      };
+      r1.readAsText(file);
+    } else if (["xlsx","xls","xlsm","ods"].indexOf(ext) !== -1){
+      var r2 = new FileReader();
+      r2.onload = function(e){
+        try{
+          var wb = XLSX.read(e.target.result, {type:"array"});
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var data = XLSX.utils.sheet_to_json(sheet, {defval:null});
+          onFileParsed(data, name);
+        } catch(err){ showImportStatus("No se pudo leer el archivo: " + err.message, true); }
+      };
+      r2.readAsArrayBuffer(file);
+    } else {
+      Papa.parse(file, {
+        header:true, dynamicTyping:true, skipEmptyLines:true,
+        complete: function(res){ onFileParsed(res.data, name); },
+        error: function(err){ showImportStatus("No se pudo leer el archivo: " + err.message, true); }
+      });
+    }
+  }
+
+  function renderImportSelects(){
+    var imp = state.imported;
+    var host = document.getElementById("importSelects");
+    var actions = document.getElementById("importActions");
+    host.style.display = ""; actions.style.display = "";
+    host.innerHTML = ""; actions.innerHTML = "";
+
+    function makeSelect(id, labelText, options, getLabel){
+      var wrap = document.createElement("div");
+      wrap.className = "field";
+      var label = document.createElement("label");
+      label.setAttribute("for", id); label.textContent = labelText;
+      var sel = document.createElement("select");
+      sel.id = id;
+      options.forEach(function(o){
+        var opt = document.createElement("option");
+        opt.value = o.value; opt.textContent = getLabel ? getLabel(o) : o.value;
+        sel.appendChild(opt);
+      });
+      wrap.appendChild(label); wrap.appendChild(sel);
+      host.appendChild(wrap);
+      return sel;
+    }
+
+    var realOpts = imp.det.binary.map(function(b){ return { value:b.col }; });
+    var realSel = makeSelect("realColSel", "Columna de clase real", realOpts, function(o){ return o.value; });
+
+    var posWrap = document.createElement("div");
+    posWrap.className = "field";
+    posWrap.innerHTML = "<label>Valor positivo</label>";
+    var posSel = document.createElement("select");
+    posSel.id = "posValSel";
+    posWrap.appendChild(posSel);
+    host.appendChild(posWrap);
+
+    function refreshPosOptions(){
+      var chosen = imp.det.binary.filter(function(b){ return b.col === realSel.value; })[0];
+      posSel.innerHTML = "";
+      (chosen ? chosen.values : []).forEach(function(v){
+        var opt = document.createElement("option"); opt.value = v; opt.textContent = v;
+        posSel.appendChild(opt);
+      });
+    }
+    refreshPosOptions();
+    realSel.addEventListener("change", refreshPosOptions);
+
+    var predOpts = [{value:""}].concat(imp.det.cols.map(function(c){ return {value:c}; }));
+    var predSel = makeSelect("predColSel", "Columna predicha (opcional → arma la matriz)", predOpts, function(o){ return o.value || "— ninguna —"; });
+
+    var numOpts = [{value:""}].concat(imp.det.numeric.map(function(c){ return {value:c}; }));
+    var ruleSel = makeSelect("ruleColSel", "Columna numérica (opcional → ejercicio sección 3)", numOpts, function(o){ return o.value || "— ninguna —"; });
+
+    var idOpts = [{value:""}].concat(imp.det.cols.map(function(c){ return {value:c}; }));
+    var idSel = makeSelect("idColSel", "Columna identificadora (opcional)", idOpts, function(o){ return o.value || "— fila # —"; });
+
+    var applyBtn = document.createElement("button");
+    applyBtn.type = "button"; applyBtn.className = "btn primary";
+    applyBtn.textContent = "Usar estos datos";
+    applyBtn.addEventListener("click", function(){ applyImport(realSel.value, posSel.value, predSel.value, ruleSel.value, idSel.value); });
+    actions.appendChild(applyBtn);
+
+    var clearBtn = document.createElement("button");
+    clearBtn.type = "button"; clearBtn.className = "btn";
+    clearBtn.textContent = "Quitar archivo";
+    clearBtn.addEventListener("click", clearImport);
+    actions.appendChild(clearBtn);
+  }
+
+  function applyImport(realCol, posVal, predCol, ruleCol, idCol){
+    var imp = state.imported;
+    if (!realCol || !posVal){ showImportStatus("Elige la columna de clase real y su valor positivo.", true); return; }
+    var negVal = (imp.det.binary.filter(function(b){ return b.col === realCol; })[0] || {values:[posVal,"—"]}).values.filter(function(v){ return v !== posVal; })[0] || "Otro";
+    var appliedSomething = false;
+
+    if (predCol){
+      var tp=0, fn=0, fp=0, tn=0;
+      imp.rows.forEach(function(r){
+        var real = String(r[realCol]).trim() === posVal;
+        var pred = String(r[predCol]).trim() === posVal;
+        if (real && pred) tp++; else if (real && !pred) fn++; else if (!real && pred) fp++; else tn++;
+      });
+      var custom = {
+        id:"custom", group:"Tus datos", title:"Matriz desde \"" + imp.filename + "\"",
+        pos:posVal, neg:negVal, tp:tp, fn:fn, fp:fp, tn:tn,
+        note:"Calculada a partir de tu archivo: columna real \"" + realCol + "\" vs. predicha \"" + predCol + "\"."
+      };
+      var existing = PRESETS.filter(function(p){ return p.id === "custom"; })[0];
+      if (existing) PRESETS[PRESETS.indexOf(existing)] = custom; else PRESETS.push(custom);
+      state.current = JSON.parse(JSON.stringify(custom));
+      appliedSomething = true;
+    }
+
+    if (ruleCol){
+      var vals = imp.rows.map(function(r){ return Number(r[ruleCol]); }).filter(isFinite);
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var span = hi - lo || 1;
+      state.practice = imp.rows.map(function(r, i){
+        return {
+          real: String(r[realCol]).trim() === posVal ? 1 : 0,
+          saldo: Number(r[ruleCol]),
+          edad: idCol ? r[idCol] : (i+1)
+        };
+      });
+      state.ruleKey = "saldo";
+      state.ruleLabel = ruleCol;
+      state.ruleUnit = "";
+      state.ruleMin = Math.floor(lo - span*0.1);
+      state.ruleMax = Math.ceil(hi + span*0.1);
+      state.ruleStep = Math.max(1, Math.round(span/40));
+      state.ruleDefault = Math.round((lo+hi)/2);
+      state.idKey = "edad";
+      state.idLabel = idCol || "#";
+      document.getElementById("exerciseDesc").textContent =
+        state.practice.length + " filas de \"" + imp.filename + "\" (columna real \"" + realCol + "\", columna de regla \"" + ruleCol + "\"). Mueve el umbral para ver cómo cambia la matriz de confusión.";
+      state._touched = false;
+      appliedSomething = true;
+    }
+
+    if (!appliedSomething){ showImportStatus("Elige al menos una columna predicha o una columna numérica para aplicar tus datos.", true); return; }
+    showImportStatus((predCol ? "Matriz" : "") + (predCol && ruleCol ? " y ejercicio actualizados" : (predCol ? " actualizada" : "Ejercicio actualizado")) + " con tu archivo \"" + imp.filename + "\".", false);
+    renderAll();
+    renderExerciseShell();
+  }
+
+  function clearImport(){
+    state.imported = null;
+    document.getElementById("importSelects").style.display = "none";
+    document.getElementById("importActions").style.display = "none";
+    document.getElementById("fileInput").value = "";
+    showImportStatus("Sin archivo cargado — usando los 9 casos precargados y los 12 registros de práctica de la sección 3.", false);
+    PRESETS = PRESETS.filter(function(p){ return p.id !== "custom"; });
+    state.practice = PRACTICE_DEFAULT.slice();
+    state.idKey = "edad"; state.idLabel = "Edad";
+    state.ruleKey = "saldo"; state.ruleLabel = "Saldo"; state.ruleUnit = "$";
+    state.ruleMin = -100; state.ruleMax = 4200; state.ruleStep = 25; state.ruleDefault = 500;
+    document.getElementById("exerciseDesc").textContent = "12 registros de práctica (edad, saldo, satisfecho) de la hoja de ejercicios del curso. Mueve el umbral de saldo — es exactamente la Fase 1 de CRISP-DM de Tu Idea en 3D (reglas de negocio antes de entrenar un modelo, sección 4.1): predice \"satisfecho = 1\" cuando el saldo supera el umbral, y mira la matriz de confusión resultante.";
+    renderAll();
+    renderExerciseShell();
+  }
+
+  var dropzone = document.getElementById("dropzone");
+  var fileInput = document.getElementById("fileInput");
+  dropzone.addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(e){ if (e.target.files[0]) parseFile(e.target.files[0]); });
+  dropzone.addEventListener("dragover", function(e){ e.preventDefault(); dropzone.classList.add("drag"); });
+  dropzone.addEventListener("dragleave", function(){ dropzone.classList.remove("drag"); });
+  dropzone.addEventListener("drop", function(e){
+    e.preventDefault(); dropzone.classList.remove("drag");
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById("thresholdSlider").addEventListener("input", function(){ state._touched = true; updateExercise(); });
+
   renderAll();
-  renderExercise();
+  renderExerciseShell();
 
   var boot = function(){};
   if (window.claude && window.claude.hot){

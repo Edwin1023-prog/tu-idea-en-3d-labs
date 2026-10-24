@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio de Clustering</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f9f9f7; --surface:#fcfcfb; --surface-2:#f1efe7; --raised:#ffffff;
+    --text:#0b0b0b; --text-2:#52514e; --muted:#898781;
+    --border:rgba(11,11,11,0.10); --grid:#e1e0d9;
+    --accent:#c2410c; --accent-strong:#9a3209; --accent-soft:#fbe7da; --accent-contrast:#fffaf6;
+    --good:#0ca30c; --warn:#b5790a; --critical:#d03b3b;
+    --c0:#2a78d6; --c0-bg:#dde8f5; --c0-ink:#0f2c48;
+    --c1:#eb6834; --c1-bg:#fbe3d4; --c1-ink:#5c2808;
+    --c2:#1baf7a; --c2-bg:#d9f0e6; --c2-ink:#0d3f2c;
+    --c3:#eda100; --c3-bg:#fbedcb; --c3-ink:#4a3303;
+    --font-display:'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+    --font-body:'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#242320; --raised:#201f1c;
+      --text:#f0efec; --text-2:#c3c2b7; --muted:#938f86;
+      --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+      --accent:#f87800; --accent-strong:#ffa64d; --accent-soft:#3a2211; --accent-contrast:#1a0f03;
+      --good:#2fcf4e; --warn:#fab219; --critical:#ff6b6b;
+      --c0:#3987e5; --c0-bg:#132c47; --c0-ink:#cfe3f8;
+      --c1:#f0824a; --c1-bg:#3a2510; --c1-ink:#ffdcc0;
+      --c2:#2bc98f; --c2-bg:#10301f; --c2-ink:#c9f3e0;
+      --c3:#f0b429; --c3-bg:#3a2d0a; --c3-ink:#fbeec0;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#242320; --raised:#201f1c;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#938f86;
+    --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+    --accent:#f87800; --accent-strong:#ffa64d; --accent-soft:#3a2211; --accent-contrast:#1a0f03;
+    --good:#2fcf4e; --warn:#fab219; --critical:#ff6b6b;
+    --c0:#3987e5; --c0-bg:#132c47; --c0-ink:#cfe3f8;
+    --c1:#f0824a; --c1-bg:#3a2510; --c1-ink:#ffdcc0;
+    --c2:#2bc98f; --c2-bg:#10301f; --c2-ink:#c9f3e0;
+    --c3:#f0b429; --c3-bg:#3a2d0a; --c3-ink:#fbeec0;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:var(--font-body); margin:0;
+       padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));}
+  .shell{max-width:980px; margin:0 auto;}
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0;}
+  p{margin:0; line-height:1.55;}
+  a{color:var(--accent);}
+  .mono{font-family:var(--font-mono);}
+  ::selection{background:var(--accent-soft); color:var(--text);}
+
+  .topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--bg); border-bottom:1px solid var(--border); margin:0 -16px;}
+  .topbar-inner{max-width:980px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;}
+  .brand{display:flex; align-items:baseline; gap:9px; min-width:0;}
+  .brand-mark{width:10px; height:10px; border-radius:2px; background:var(--accent); flex:none;}
+  .brand-name{font-weight:700; font-size:15px; letter-spacing:.01em;}
+  .brand-sub{color:var(--muted); font-size:12.5px;}
+
+  .pillnav{position:sticky; top:calc(env(safe-area-inset-top,0px) + 47px); z-index:29; background:var(--bg); border-bottom:1px solid var(--border); margin:0 -16px;}
+  .pillnav-inner{max-width:980px; margin:0 auto; padding:9px 16px; display:flex; gap:7px; overflow-x:auto; scrollbar-width:none;}
+  .pillnav-inner::-webkit-scrollbar{display:none;}
+  .pill{flex:none; font-family:var(--font-mono); font-size:12px; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--text-2); background:var(--surface); white-space:nowrap; cursor:pointer;}
+  .pill:hover{border-color:var(--accent);}
+  .pill.active{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast); font-weight:600;}
+
+  .hero{padding:30px 0 22px;}
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); font-weight:600;}
+  .hero h1{font-size:clamp(24px,4vw,32px); margin-top:6px; font-weight:700;}
+  .hero p.lede{margin-top:10px; max-width:64ch; color:var(--text-2); font-size:15px;}
+
+  section.step{padding:34px 0; border-top:1px solid var(--border);}
+  section.step:first-of-type{border-top:none;}
+  .step-head{display:flex; gap:12px; align-items:flex-start; margin-bottom:16px;}
+  .step-num{font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:700; background:var(--accent-soft); border-radius:7px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .step-head h2{font-size:19px;}
+  .step-head p{color:var(--text-2); font-size:13.5px; margin-top:3px;}
+  .step-phase{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); font-weight:700; margin:0 0 2px;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; min-width:0;}
+  .card + .card{margin-top:12px;}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  @media (max-width:720px){ .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;} }
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;}
+  th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600;}
+  tbody tr:hover{background:var(--surface-2);}
+  .table-wrap{overflow-x:auto; border-radius:10px;}
+
+  .btnrow{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  button{font-family:var(--font-body); font-size:13.5px; font-weight:600; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); padding:9px 14px; cursor:pointer;}
+  button:hover{border-color:var(--accent);}
+  button.kchip{font-family:var(--font-mono); border-radius:999px; padding:9px 16px;}
+  button.kchip.active{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast);}
+  button.kchip .asw{opacity:.7; margin-left:6px;}
+
+  .note{font-size:12.5px; color:var(--text-2); background:var(--surface-2); border-radius:8px; padding:10px 12px; border:1px solid var(--border);}
+  .note b{color:var(--text);}
+  .note.warn{color:#9a3209; background:var(--accent-soft);}
+
+  .dropzone{border:1.5px dashed var(--border); border-radius:12px; padding:22px; text-align:center; cursor:pointer; background:var(--surface);}
+  .dropzone:hover, .dropzone.drag{border-color:var(--accent); background:var(--accent-soft);}
+  .dropzone input{display:none;}
+  .dropzone .dz-title{font-weight:600; font-size:14px;}
+  .dropzone .dz-sub{color:var(--muted); font-size:12.5px; margin-top:4px;}
+
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field label{font-size:12px; color:var(--text-2); font-weight:500;}
+  select{
+    font-family:var(--font-mono); font-size:13px; padding:8px 10px; border-radius:8px;
+    border:1px solid var(--border); background:var(--raised); color:var(--text); width:100%;
+  }
+
+  .chart-wrap{position:relative; height:260px; min-width:0;}
+  canvas{display:block; width:100%; height:100%;}
+  .legend-row{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--text-2);}
+  .legend-row .lk{display:inline-flex; align-items:center; gap:6px;}
+  .legend-row .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+
+  .seg-card{border-radius:12px; padding:14px 16px; border:1px solid var(--border);}
+  .seg-head{display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px; margin-bottom:6px;}
+  .seg-dot{width:11px; height:11px; border-radius:3px; flex:none;}
+  .seg-metrics{display:flex; gap:12px; flex-wrap:wrap; font-size:12.5px; color:var(--text-2); margin-bottom:8px;}
+  .seg-metrics b{color:var(--text); font-family:var(--font-mono);}
+  .tagrow{display:flex; gap:6px; flex-wrap:wrap;}
+  .tagchip{font-size:11px; font-family:var(--font-mono); padding:3px 8px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-2);}
+
+  .stab-row{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border);}
+  .stab-row:last-child{border-bottom:none;}
+  .stab-bar{flex:1; height:8px; border-radius:4px; background:var(--surface-2); overflow:hidden; min-width:0;}
+  .stab-fill{height:100%; border-radius:4px;}
+  .stab-label{font-family:var(--font-mono); font-size:12.5px; width:58px; text-align:right; flex:none;}
+  .stab-qual{font-size:11.5px; width:90px; flex:none; text-align:right;}
+
+  .policy-card h3{font-size:15px; margin-bottom:6px;}
+  .policy-card .kicker{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--accent); letter-spacing:.04em; font-weight:700;}
+
+  footer{padding:30px 0 50px; border-top:1px solid var(--border); margin-top:10px;}
+  footer p{color:var(--muted); font-size:12.5px; max-width:70ch;}
+  footer p + p{margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Laboratorio de Clustering</span>
+      <span class="brand-sub">&nbsp;· Tu Idea en 3D</span>
+    </div>
+    <span class="mono" style="font-size:11.5px;color:var(--muted);" id="rowCountNote">36 filas</span>
+  </div>
+</div>
+<div class="pillnav">
+  <div class="pillnav-inner" id="pillnav"></div>
+</div>
+
+<div class="shell">
+  <div class="hero">
+    <div class="eyebrow">Segmentación de clientes · K-Medias · metodología CRISP-DM</div>
+    <h1>Qué segmentos de clientes esconden tus datos</h1>
+    <p class="lede">Importa cualquier tabla propia (o usa la bitácora de leads del Laboratorio de Precios, ya cargada), elige las variables numéricas y el número de segmentos (k), y valida qué tan estables son con remuestreo — todo el cálculo corre en tu navegador, en vivo.</p>
+  </div>
+
+  <!-- ===== 1 · IMPORTAR ===== -->
+  <section class="step" id="s1" data-title="1 · Importar">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Importar la base de datos</h2>
+        <p>Cualquier archivo de datos tabulares: CSV, TSV, JSON, Excel u OpenDocument. Ya viene cargada la bitácora de leads del Laboratorio de Precios — puedes reemplazarla por la tuya.</p>
+      </div>
+    </div>
+    <div class="card">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,.xlsm,.ods">
+        <div class="dz-title">Arrastra un archivo o haz clic para elegirlo</div>
+        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods</div>
+      </label>
+      <div id="fileStatus" class="note" style="margin-top:12px;"></div>
+      <div class="btnrow" style="margin-top:10px;">
+        <button type="button" id="btnRestore">Restaurar bitácora de ejemplo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2 · VARIABLES ===== -->
+  <section class="step" id="s2" data-title="2 · Variables">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Primeras filas y variables para agrupar</h2>
+        <p>Elige entre 2 y 3 columnas numéricas con las que agrupar; se estandarizan (media 0, desviación 1) antes de aplicar K-Medias para que ninguna domine por su escala. Opcionalmente, una columna de texto sirve para describir cada segmento.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="headTable"></table>
+      </div>
+      <p class="note" id="shapeNote" style="margin-top:10px;"></p>
+    </div>
+    <div class="card">
+      <div class="grid-4" id="colSelects"></div>
+      <p class="note" id="colNote" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ===== 3 · ELEGIR K ===== -->
+  <section class="step" id="s3" data-title="3 · Elegir k">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
+        <h2>Elegir el número de segmentos (k)</h2>
+        <p>Para cada k se corren 30 inicios aleatorios de K-Medias y se elige el mejor; el ancho de silueta promedio (ASW) mide qué tan bien separados quedan los grupos &mdash; más alto es mejor.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="btnrow" id="kChips"></div>
+      <div class="chart-wrap" style="margin-top:16px; height:160px;"><canvas id="chartASW"></canvas></div>
+      <p class="note" id="kNote" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ===== 4 · SEGMENTOS ===== -->
+  <section class="step" id="s4" data-title="4 · Segmentos">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
+        <h2>Segmentos resultantes</h2>
+        <p id="scatterDesc">Primera variable vs. segunda variable, coloreado por el segmento asignado con el k elegido arriba.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chart-wrap"><canvas id="chartScatter"></canvas></div>
+      <div class="legend-row" id="scatterLegend"></div>
+    </div>
+    <div class="grid-3" id="segCards" style="margin-top:12px;"></div>
+  </section>
+
+  <!-- ===== 5 · ESTABILIDAD ===== -->
+  <section class="step" id="s5" data-title="5 · Estabilidad">
+    <div class="step-head">
+      <div class="step-num">5</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 5 &middot; Evaluación</p>
+        <h2>Estabilidad del agrupamiento (bootstrap)</h2>
+        <p>Se remuestrean las filas con reemplazo 60 veces, se vuelve a agrupar cada vez, y se compara cada segmento remuestreado contra el original con el índice de Jaccard. &gt;0,75 estable, 0,6&ndash;0,75 razonable, &lt;0,6 inestable.</p>
+      </div>
+    </div>
+    <div class="card" id="stabCard"></div>
+  </section>
+
+  <!-- ===== 6 · INTERPRETACIÓN ===== -->
+  <section class="step" id="s6" data-title="6 · Interpretación">
+    <div class="step-head">
+      <div class="step-num">6</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
+        <h2>Interpretación de negocio</h2>
+        <p id="interpretDesc">Con tres segmentos cada grupo pide una política distinta.</p>
+      </div>
+    </div>
+    <div id="interpretHost"></div>
+  </section>
+
+  <footer>
+    <p><b>Honestidad metodológica:</b> el agrupamiento (K-Medias, selección de k por ancho de silueta, validación por estabilidad bootstrap) corre completo en tu navegador. La bitácora precargada es la misma base simulada del Laboratorio de Precios (ver su nota de honestidad); con tus propios datos, reemplázala en el paso 1 y todo se recalcula solo.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============== THEME-AWARE COLORS ============== */
+  function currentTheme(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark' || t === 'light') return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  var PAL = {
+    light:{ text:'#0b0b0b', text2:'#52514e', muted:'#898781', grid:'#e1e0d9', surface:'#fcfcfb',
+            clusters:['#2a78d6','#eb6834','#1baf7a','#eda100'] },
+    dark:{ text:'#f0efec', text2:'#c3c2b7', muted:'#938f86', grid:'#2c2c2a', surface:'#1a1a19',
+           clusters:['#3987e5','#f0824a','#2bc98f','#f0b429'] }
+  };
+  function pal(){ return PAL[currentTheme()]; }
+
+  /* ============== SEEDED RNG (LCG) ============== */
+  function makeRng(seed){
+    var s = seed % 2147483647; if (s <= 0) s += 2147483646;
+    return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  }
+
+  /* ============== EMBEDDED DEFAULT DATA (misma bitácora del Laboratorio de Precios) ============== */
+  var EMBEDDED = [{"Fecha":"2026-04-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":2,"Consultas_recibidas":7,"categoria":"Jabones","canal":"TikTok"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":81000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Velas","canal":"Instagram"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":102000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","canal":"Instagram"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":113000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Repostería","canal":"WhatsApp Business"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":163000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Decoración","canal":"Instagram"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":249000,"Pedidos_convertidos":0,"Consultas_recibidas":1,"categoria":"Piezas especiales","canal":"TikTok"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":3,"Consultas_recibidas":8,"categoria":"Jabones","canal":"WhatsApp Business"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":80000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Velas","canal":"WhatsApp Business"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":100000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","canal":"Instagram"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":139000,"Pedidos_convertidos":1,"Consultas_recibidas":5,"categoria":"Repostería","canal":"Instagram"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":197000,"Pedidos_convertidos":0,"Consultas_recibidas":1,"categoria":"Decoración","canal":"WhatsApp Business"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":232000,"Pedidos_convertidos":0,"Consultas_recibidas":2,"categoria":"Piezas especiales","canal":"WhatsApp Business"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":57000,"Pedidos_convertidos":3,"Consultas_recibidas":6,"categoria":"Jabones","canal":"WhatsApp Business"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":73000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Velas","canal":"Instagram"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":90000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","canal":"TikTok"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":124000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Repostería","canal":"Instagram"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":173000,"Pedidos_convertidos":1,"Consultas_recibidas":3,"categoria":"Decoración","canal":"Instagram"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":256000,"Pedidos_convertidos":0,"Consultas_recibidas":3,"categoria":"Piezas especiales","canal":"Tienda Shopify"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":3,"Consultas_recibidas":7,"categoria":"Jabones","canal":"WhatsApp Business"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":78000,"Pedidos_convertidos":3,"Consultas_recibidas":7,"categoria":"Velas","canal":"Instagram"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":95000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","canal":"Instagram"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":129000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Repostería","canal":"Instagram"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":178000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Decoración","canal":"WhatsApp Business"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":259000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Piezas especiales","canal":"Instagram"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Jabones","canal":"Instagram"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":77000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Velas","canal":"Instagram"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":92000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","canal":"TikTok"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":124000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Repostería","canal":"WhatsApp Business"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":168000,"Pedidos_convertidos":0,"Consultas_recibidas":1,"categoria":"Decoración","canal":"WhatsApp Business"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":242000,"Pedidos_convertidos":1,"Consultas_recibidas":3,"categoria":"Piezas especiales","canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":57000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Jabones","canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":89000,"Pedidos_convertidos":2,"Consultas_recibidas":7,"categoria":"Velas","canal":"Instagram"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":83000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","canal":"Instagram"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":139000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Repostería","canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":188000,"Pedidos_convertidos":0,"Consultas_recibidas":2,"categoria":"Decoración","canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":266000,"Pedidos_convertidos":0,"Consultas_recibidas":2,"categoria":"Piezas especiales","canal":"Instagram"}];
+
+  function buildDefaultRows(){
+    return EMBEDDED.map(function(r){
+      var conv = r.Consultas_recibidas ? r.Pedidos_convertidos / r.Consultas_recibidas : 0;
+      return {
+        Fecha:r.Fecha, categoria:r.categoria, canal:r.canal,
+        Precio_cotizado_promedio:r.Precio_cotizado_promedio,
+        Pedidos_convertidos:r.Pedidos_convertidos,
+        Consultas_recibidas:r.Consultas_recibidas,
+        Tasa_conversion: Math.round(conv*1000)/1000
+      };
+    });
+  }
+
+  /* ============== STATE ============== */
+  var state = {
+    rows: buildDefaultRows(),
+    columns: ['Fecha','categoria','canal','Precio_cotizado_promedio','Pedidos_convertidos','Consultas_recibidas','Tasa_conversion'],
+    numericCols: ['Precio_cotizado_promedio','Pedidos_convertidos','Consultas_recibidas','Tasa_conversion'],
+    textCols: ['Fecha','categoria','canal'],
+    featCols: ['Precio_cotizado_promedio','Pedidos_convertidos','Tasa_conversion'],
+    tagCol: 'categoria',
+    tagCol2: 'canal',
+    isDefault: true,
+    k: 3,
+    asw: {},
+    X: null, idx: null, Xs: null, STD: null, result: null
+  };
+
+  /* ============== PARSING ============== */
+  function looksLikeId(c, rows){
+    if (/(^|_)id($|_)|^id$|^no\.?$|^#$|^indice$|^índice$/i.test(c)) return true;
+    var vals = rows.map(function(r){ return Number(r[c]); }).filter(isFinite);
+    if (vals.length === rows.length && rows.length > 4){
+      var sorted = vals.slice().sort(function(a,b){ return a-b; });
+      var allInt = sorted.every(function(v){ return Number.isInteger(v); });
+      var consecutive = allInt && sorted.every(function(v,i){ return i===0 || v === sorted[i-1]+1; });
+      if (consecutive) return true; // 1,2,3,... -> almost certainly an id column
+    }
+    return false;
+  }
+  function detectColumns(rows){
+    var cols = Object.keys(rows[0] || {});
+    var numeric = [], text = [];
+    cols.forEach(function(c){
+      var vals = rows.map(function(r){ return r[c]; }).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+      var numCount = vals.filter(function(v){ return (typeof v === 'number' && isFinite(v)) || (typeof v==='string' && v.trim()!=='' && isFinite(Number(v))); }).length;
+      if (vals.length && numCount/vals.length >= 0.8) numeric.push(c); else text.push(c);
+    });
+    // de-prioritize id-like numeric columns for the *default* feature pick, but keep them selectable
+    var ranked = numeric.slice().sort(function(a,b){
+      var ia = looksLikeId(a, rows) ? 1 : 0, ib = looksLikeId(b, rows) ? 1 : 0;
+      return ia - ib;
+    });
+    return { cols:cols, numeric:numeric, numericRanked:ranked, text:text };
+  }
+
+  function onParsed(rows, filename){
+    rows = (rows||[]).filter(function(r){ return r && Object.keys(r).length; });
+    if (!rows.length){ showStatus('El archivo "'+filename+'" no tiene filas reconocibles.', true); return; }
+    var det = detectColumns(rows);
+    if (det.numeric.length < 2){ showStatus('El archivo "'+filename+'" necesita al menos 2 columnas numéricas para poder agrupar.', true); return; }
+    state.rows = rows;
+    state.columns = det.cols;
+    state.numericCols = det.numeric;
+    state.textCols = det.text;
+    state.featCols = det.numericRanked.slice(0,3);
+    while (state.featCols.length < 3) state.featCols.push(null);
+    state.tagCol = det.text[0] || null;
+    state.tagCol2 = det.text[1] || null;
+    state.isDefault = false;
+    showStatus(rows.length + ' filas cargadas de "'+filename+'" · '+det.numeric.length+' columnas numéricas detectadas.', false);
+    rebuildPipeline();
+    renderAll();
+  }
+
+  function showStatus(msg, isWarn){
+    var el = document.getElementById('fileStatus');
+    el.textContent = msg;
+    el.className = 'note' + (isWarn ? ' warn' : '');
+  }
+
+  function parseFile(file){
+    var name = file.name || 'archivo';
+    var ext = (name.split('.').pop()||'').toLowerCase();
+    if (ext === 'json'){
+      var r1 = new FileReader();
+      r1.onload = function(e){
+        try{ var data = JSON.parse(e.target.result); onParsed(Array.isArray(data)?data:(data.rows||data.data||[]), name); }
+        catch(err){ showStatus('No se pudo leer el JSON: '+err.message, true); }
+      };
+      r1.readAsText(file);
+    } else if (['xlsx','xls','xlsm','ods'].indexOf(ext) !== -1){
+      var r2 = new FileReader();
+      r2.onload = function(e){
+        try{
+          var wb = XLSX.read(e.target.result, {type:'array'});
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var data = XLSX.utils.sheet_to_json(sheet, {defval:null});
+          onParsed(data, name);
+        } catch(err){ showStatus('No se pudo leer el archivo: '+err.message, true); }
+      };
+      r2.readAsArrayBuffer(file);
+    } else {
+      Papa.parse(file, {
+        header:true, dynamicTyping:true, skipEmptyLines:true,
+        complete: function(res){ onParsed(res.data, name); },
+        error: function(err){ showStatus('No se pudo leer el archivo: '+err.message, true); }
+      });
+    }
+  }
+
+  /* ============== DISTANCE / K-MEANS / SILHOUETTE / BOOTSTRAP ============== */
+  function dist2(a,b){ var s=0; for (var i=0;i<a.length;i++){ var d=a[i]-b[i]; s+=d*d; } return s; }
+
+  function standardize(X){
+    var n = X.length, d = X[0].length;
+    var mean = new Array(d).fill(0), std = new Array(d).fill(0);
+    for (var j=0;j<d;j++){ for (var i=0;i<n;i++) mean[j]+=X[i][j]; mean[j]/=n; }
+    for (j=0;j<d;j++){ for (i=0;i<n;i++) std[j]+=Math.pow(X[i][j]-mean[j],2); std[j]=Math.sqrt(std[j]/n) || 1; }
+    var Xs = X.map(function(row){ return row.map(function(v,j){ return (v-mean[j])/std[j]; }); });
+    return { Xs:Xs, mean:mean, std:std };
+  }
+
+  function kmeansOnce(data, k, rng){
+    var n = data.length;
+    var idxs = [];
+    while (idxs.length < k && idxs.length < n){
+      var idx = Math.floor(rng()*n);
+      if (idxs.indexOf(idx) === -1) idxs.push(idx);
+    }
+    var centers = idxs.map(function(i){ return data[i].slice(); });
+    var labels = new Array(n).fill(0);
+    for (var iter=0; iter<100; iter++){
+      var changed = false;
+      for (var i=0;i<n;i++){
+        var best=0, bestD=Infinity;
+        for (var c=0;c<k;c++){ var dd=dist2(data[i],centers[c]); if (dd<bestD){ bestD=dd; best=c; } }
+        if (labels[i]!==best){ labels[i]=best; changed=true; }
+      }
+      var sums = Array.from({length:k}, function(){ return new Array(data[0].length).fill(0); });
+      var counts = new Array(k).fill(0);
+      for (i=0;i<n;i++){ counts[labels[i]]++; for (var j=0;j<data[0].length;j++) sums[labels[i]][j]+=data[i][j]; }
+      for (c=0;c<k;c++){
+        if (counts[c]===0) continue;
+        for (j=0;j<data[0].length;j++) centers[c][j] = sums[c][j]/counts[c];
+      }
+      if (!changed) break;
+    }
+    var inertia = 0;
+    for (i=0;i<n;i++) inertia += dist2(data[i], centers[labels[i]]);
+    return { labels:labels, centers:centers, inertia:inertia };
+  }
+  function kmeans(data, k, nInit, seed){
+    var rng = makeRng(seed);
+    var best = null;
+    for (var r=0;r<nInit;r++){
+      var res = kmeansOnce(data, k, rng);
+      if (!best || res.inertia < best.inertia) best = res;
+    }
+    return best;
+  }
+
+  function silhouette(data, labels, k){
+    var n = data.length;
+    if (k<2 || k>=n) return 0;
+    var byCluster = {};
+    for (var i=0;i<n;i++){ (byCluster[labels[i]] = byCluster[labels[i]]||[]).push(i); }
+    var total = 0, counted = 0;
+    for (i=0;i<n;i++){
+      var ci = labels[i];
+      var same = byCluster[ci];
+      var a = 0;
+      if (same.length>1){
+        for (var m=0;m<same.length;m++){ if (same[m]!==i) a += Math.sqrt(dist2(data[i],data[same[m]])); }
+        a /= (same.length-1);
+      }
+      var b = Infinity;
+      for (var c=0;c<k;c++){
+        if (c===ci || !byCluster[c] || !byCluster[c].length) continue;
+        var sum=0;
+        for (m=0;m<byCluster[c].length;m++) sum += Math.sqrt(dist2(data[i],data[byCluster[c][m]]));
+        var avg = sum/byCluster[c].length;
+        if (avg<b) b=avg;
+      }
+      if (!isFinite(b)) continue;
+      var s = same.length>1 ? (b-a)/Math.max(a,b) : 0;
+      total += s; counted++;
+    }
+    return counted? total/counted : 0;
+  }
+
+  function bootstrapStability(data, origLabels, k, reps, seed){
+    var n = data.length;
+    var rng = makeRng(seed);
+    var origSets = [];
+    for (var c=0;c<k;c++){ origSets.push(new Set()); }
+    for (var i=0;i<n;i++) origSets[origLabels[i]].add(i);
+
+    var acc = new Array(k).fill(0);
+    for (var b=0;b<reps;b++){
+      var idx = [];
+      for (i=0;i<n;i++) idx.push(Math.floor(rng()*n));
+      var sample = idx.map(function(ix){ return data[ix]; });
+      var res = kmeans(sample, k, 12, seed + 1000 + b*7);
+      var bootSets = [];
+      for (c=0;c<k;c++) bootSets.push(new Set());
+      for (i=0;i<idx.length;i++) bootSets[res.labels[i]].add(idx[i]);
+      for (c=0;c<k;c++){
+        var best = 0;
+        for (var c2=0;c2<k;c2++){
+          var inter=0; bootSets[c2].forEach(function(v){ if (origSets[c].has(v)) inter++; });
+          var uni = new Set([].concat(Array.from(origSets[c]), Array.from(bootSets[c2]))).size;
+          var j = uni? inter/uni : 0;
+          if (j>best) best=j;
+        }
+        acc[c]+=best;
+      }
+    }
+    return acc.map(function(v){ return v/reps; });
+  }
+
+  /* ============== HELPERS ============== */
+  function fmtNum(v,d){ if (v===null||v===undefined||!isFinite(v)) return '—'; return Number(v).toLocaleString('es-CO', {maximumFractionDigits: d==null?2:d}); }
+  function fmtCell(c, v){
+    if (v===null||v===undefined||v==='') return '—';
+    if (typeof v === 'number'){
+      if (state.isDefault && c==='Precio_cotizado_promedio') return '$'+fmtNum(v,0);
+      if (state.isDefault && c==='Tasa_conversion') return (v*100).toFixed(1)+'%';
+      return fmtNum(v,2);
+    }
+    return esc(v);
+  }
+  function fmtFeat(col, v){
+    if (state.isDefault && col==='Precio_cotizado_promedio') return '$'+fmtNum(v,0);
+    if (state.isDefault && col==='Tasa_conversion') return (v*100).toFixed(1)+'%';
+    return fmtNum(v,2);
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* ============== PIPELINE: build X / Xs / run k=2..5 ============== */
+  function rebuildPipeline(){
+    var cols = state.featCols.filter(Boolean);
+    var X = [], idx = [];
+    state.rows.forEach(function(r, i){
+      var vec = cols.map(function(c){ return Number(r[c]); });
+      if (vec.every(function(v){ return isFinite(v); })){ X.push(vec); idx.push(i); }
+    });
+    state.X = X; state.idx = idx;
+    document.getElementById('rowCountNote').textContent = state.rows.length + ' filas · ' + X.length + ' usables';
+    if (X.length < 6 || cols.length < 2){
+      state.Xs = null; state.STD = null; state.result = null; state.asw = {};
+      return;
+    }
+    state.STD = standardize(X);
+    state.Xs = state.STD.Xs;
+    state.asw = {};
+    var maxK = Math.min(5, X.length - 1);
+    for (var k=2; k<=maxK; k++){
+      var res = kmeans(state.Xs, k, 30, 817234);
+      state.asw[k] = silhouette(state.Xs, res.labels, k);
+      if (k === Math.min(3, maxK)) state.result = res;
+    }
+    state.k = Math.min(3, maxK);
+    var res3 = kmeans(state.Xs, state.k, 30, 817234);
+    state.result = res3;
+  }
+
+  function runForK(k){
+    if (!state.Xs) return;
+    state.result = kmeans(state.Xs, k, 30, 817234);
+    state.k = k;
+    if (state.asw[k] === undefined) state.asw[k] = silhouette(state.Xs, state.result.labels, k);
+  }
+
+  /* ============== RENDER: head table ============== */
+  function renderHead(){
+    var cols = state.columns;
+    var host = document.getElementById('headTable');
+    if (!state.rows.length){ host.innerHTML=''; return; }
+    var html = '<thead><tr>' + cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('') + '</tr></thead><tbody>';
+    state.rows.slice(0,5).forEach(function(r){
+      html += '<tr>' + cols.map(function(c){ return '<td>'+fmtCell(c, r[c])+'</td>'; }).join('') + '</tr>';
+    });
+    html += '</tbody>';
+    host.innerHTML = html;
+    document.getElementById('shapeNote').innerHTML = '<b>'+state.rows.length+'</b> filas &times; <b>'+cols.length+'</b> columnas' + (state.isDefault ? ' &mdash; bitácora de ejemplo de Tu Idea en 3D (misma del Laboratorio de Precios).' : '.');
+  }
+
+  /* ============== RENDER: column selects ============== */
+  function renderColSelects(){
+    var host = document.getElementById('colSelects');
+    host.innerHTML = '';
+    function makeSelect(id, labelText, options, selected, allowNone){
+      var wrap = document.createElement('div');
+      wrap.className = 'field';
+      var label = document.createElement('label');
+      label.setAttribute('for', id);
+      label.textContent = labelText;
+      var sel = document.createElement('select');
+      sel.id = id;
+      if (allowNone){
+        var opt0 = document.createElement('option');
+        opt0.value = ''; opt0.textContent = '— ninguna —';
+        sel.appendChild(opt0);
+      }
+      options.forEach(function(c){
+        var opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        if (c === selected) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (allowNone && !selected) sel.value = '';
+      wrap.appendChild(label); wrap.appendChild(sel);
+      host.appendChild(wrap);
+      return sel;
+    }
+    var s1 = makeSelect('featSel1', 'Variable 1', state.numericCols, state.featCols[0], false);
+    var s2 = makeSelect('featSel2', 'Variable 2', state.numericCols, state.featCols[1], false);
+    var s3 = makeSelect('featSel3', 'Variable 3 (opcional)', state.numericCols, state.featCols[2], true);
+    var s4 = makeSelect('tagSel', 'Columna de etiqueta', state.textCols, state.tagCol, true);
+
+    function onFeatChange(){
+      state.featCols = [s1.value, s2.value, s3.value || null];
+      state.tagCol = s4.value || null;
+      rebuildPipeline();
+      renderAll();
+    }
+    s1.addEventListener('change', onFeatChange);
+    s2.addEventListener('change', onFeatChange);
+    s3.addEventListener('change', onFeatChange);
+    s4.addEventListener('change', onFeatChange);
+
+    var note = document.getElementById('colNote');
+    var excluded = state.rows.length - (state.X ? state.X.length : 0);
+    note.innerHTML = state.featCols.filter(Boolean).length < 2
+      ? '<b>Elige al menos 2 variables</b> numéricas para poder agrupar.'
+      : 'Agrupando por: <b>' + state.featCols.filter(Boolean).join(', ') + '</b>' + (excluded>0 ? ' &middot; '+excluded+' fila(s) excluida(s) por datos faltantes en esas columnas.' : '.');
+  }
+
+  /* ============== RENDER: k chips + ASW chart ============== */
+  function renderKChips(){
+    var host = document.getElementById('kChips');
+    host.innerHTML = '';
+    if (!state.Xs){ document.getElementById('kNote').textContent=''; return; }
+    var ks = Object.keys(state.asw).map(Number).sort(function(a,b){return a-b;});
+    var bestK = ks[0], bestAsw = -1;
+    ks.forEach(function(k){ if (state.asw[k] > bestAsw){ bestAsw = state.asw[k]; bestK = k; } });
+    ks.forEach(function(k){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'kchip' + (k===state.k ? ' active' : '');
+      btn.innerHTML = 'k = ' + k + '<span class="asw">ASW ' + state.asw[k].toFixed(3) + '</span>';
+      btn.addEventListener('click', (function(kk){ return function(){ runForK(kk); renderAll(); }; })(k));
+      host.appendChild(btn);
+    });
+    var note = document.getElementById('kNote');
+    note.innerHTML = 'El ASW más alto es <b>k=' + bestK + '</b> (' + bestAsw.toFixed(3) + '). Usando k=' + state.k + ' en las secciones de abajo.';
+  }
+
+  function drawBarChart(canvasId, values, labels, highlightIndex){
+    var canvas = document.getElementById(canvasId);
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1,rect.width*dpr); canvas.height = Math.max(1,rect.height*dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W = rect.width, H = rect.height;
+    ctx.clearRect(0,0,W,H);
+    if (!values.length) return;
+    var p = pal();
+    var padL=34, padB=22, padT=10, padR=10;
+    var plotW = W-padL-padR, plotH = H-padT-padB;
+    var maxV = Math.max.apply(null, values) * 1.15 || 1;
+    ctx.strokeStyle = p.grid; ctx.lineWidth = 1; ctx.font = '11px IBM Plex Mono, monospace'; ctx.fillStyle = p.text2;
+    for (var g=0; g<=4; g++){
+      var gy = padT + plotH - (g/4)*plotH;
+      ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W-padR, gy); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillText((maxV*g/4).toFixed(2), padL-6, gy+3);
+    }
+    var n = values.length, bw = plotW/n*0.5, gap = plotW/n;
+    values.forEach(function(v,i){
+      var x = padL + gap*i + (gap-bw)/2;
+      var h = (v/maxV)*plotH;
+      var y = padT+plotH-h;
+      ctx.fillStyle = (i===highlightIndex) ? p.clusters[0] : p.muted;
+      ctx.globalAlpha = (i===highlightIndex) ? 1 : 0.45;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x,y,bw,h,[4,4,0,0]); else ctx.rect(x,y,bw,h);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = p.text2; ctx.textAlign='center';
+      ctx.fillText(labels[i], x+bw/2, padT+plotH+16);
+    });
+  }
+
+  function renderASWChart(){
+    var ks = Object.keys(state.asw).map(Number).sort(function(a,b){return a-b;});
+    var vals = ks.map(function(k){ return state.asw[k]; });
+    drawBarChart('chartASW', vals, ks.map(function(k){return 'k='+k;}), ks.indexOf(state.k));
+  }
+
+  /* ============== RENDER: scatter ============== */
+  function renderScatter(){
+    var canvas = document.getElementById('chartScatter');
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1,rect.width*dpr); canvas.height = Math.max(1,rect.height*dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W = rect.width, H = rect.height;
+    ctx.clearRect(0,0,W,H);
+    var p = pal();
+    var legend = document.getElementById('scatterLegend');
+    legend.innerHTML = '';
+    var desc = document.getElementById('scatterDesc');
+    var cols = state.featCols.filter(Boolean);
+    if (!state.result || !state.X || !state.X.length || cols.length<2){
+      desc.textContent = 'Carga datos y elige al menos 2 variables para ver los segmentos.';
+      return;
+    }
+    desc.innerHTML = '<span class="mono">'+esc(cols[0])+'</span> vs. <span class="mono">'+esc(cols[1])+'</span>, coloreado por el segmento asignado con el k elegido arriba.';
+
+    var padL=56, padB=36, padT=14, padR=14;
+    var plotW=W-padL-padR, plotH=H-padT-padB;
+
+    var xs = state.X.map(function(r){return r[0];}), ys = state.X.map(function(r){return r[1];});
+    var xMin=Math.min.apply(null,xs), xMax=Math.max.apply(null,xs);
+    var yMin=Math.min.apply(null,ys), yMax=Math.max.apply(null,ys);
+    var xPad=(xMax-xMin)*0.08||1, yPad=(yMax-yMin)*0.12||1;
+    xMin-=xPad; xMax+=xPad; yMin=Math.min(yMin-yPad,0); yMax+=yPad;
+
+    function px(v){ return padL + (v-xMin)/(xMax-xMin)*plotW; }
+    function py(v){ return padT + plotH - (v-yMin)/(yMax-yMin)*plotH; }
+
+    ctx.strokeStyle=p.grid; ctx.lineWidth=1; ctx.font='11px IBM Plex Mono, monospace'; ctx.fillStyle=p.text2;
+    for (var g=0; g<=4; g++){
+      var gy = padT + plotH - (g/4)*plotH;
+      ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillText(fmtFeat(cols[1], yMin+(yMax-yMin)*g/4), padL-8, gy+3);
+    }
+    for (g=0; g<=4; g++){
+      var gx = padL + (g/4)*plotW;
+      ctx.textAlign='center'; ctx.fillText(fmtFeat(cols[0], xMin+(xMax-xMin)*g/4), gx, H-padB+16);
+    }
+    ctx.save();
+    ctx.translate(14, padT+plotH/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center'; ctx.fillText(cols[1], 0, 0);
+    ctx.restore();
+    ctx.textAlign='center'; ctx.fillText(cols[0], padL+plotW/2, H-4);
+
+    var labels = state.result.labels;
+    for (var i=0;i<state.X.length;i++){
+      ctx.beginPath();
+      ctx.fillStyle = p.clusters[labels[i] % p.clusters.length];
+      ctx.globalAlpha = 0.85;
+      ctx.arc(px(state.X[i][0]), py(state.X[i][1]), 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    var centersReal = state.result.centers.map(function(c){
+      return c.map(function(v,j){ return v*state.STD.std[j]+state.STD.mean[j]; });
+    });
+    centersReal.forEach(function(c, ci){
+      ctx.beginPath();
+      ctx.fillStyle = p.clusters[ci % p.clusters.length];
+      ctx.strokeStyle = p.text;
+      ctx.lineWidth = 2;
+      ctx.arc(px(c[0]), py(c[1]), 8, 0, Math.PI*2);
+      ctx.fill(); ctx.stroke();
+    });
+
+    for (var c=0;c<state.k;c++){
+      var n = labels.filter(function(l){return l===c;}).length;
+      var item = document.createElement('span');
+      item.className = 'lk';
+      item.innerHTML = '<span class="dot" style="background:'+p.clusters[c%p.clusters.length]+'"></span>Segmento '+(c+1)+' (n='+n+')';
+      legend.appendChild(item);
+    }
+  }
+
+  /* ============== RENDER: segment cards ============== */
+  function renderSegCards(){
+    var host = document.getElementById('segCards');
+    host.innerHTML = '';
+    if (!state.result) return;
+    var p = pal();
+    var labels = state.result.labels;
+    var cols = state.featCols.filter(Boolean);
+    var centersReal = state.result.centers.map(function(c){
+      return c.map(function(v,j){ return v*state.STD.std[j]+state.STD.mean[j]; });
+    });
+    for (var c=0;c<state.k;c++){
+      var origIdxs = [];
+      for (var i=0;i<state.idx.length;i++) if (labels[i]===c) origIdxs.push(state.idx[i]);
+      var tags = {};
+      if (state.tagCol){
+        origIdxs.forEach(function(oi){
+          var v = state.rows[oi][state.tagCol];
+          if (v!==null && v!==undefined && v!=='') tags[v] = (tags[v]||0)+1;
+        });
+      }
+      var topTags = Object.keys(tags).sort(function(a,b){return tags[b]-tags[a];}).slice(0,4);
+      var col = p.clusters[c % p.clusters.length];
+      var card = document.createElement('div');
+      card.className = 'card seg-card';
+      card.style.borderColor = col;
+      card.innerHTML =
+        '<div class="seg-head"><span class="seg-dot" style="background:'+col+'"></span>Segmento '+(c+1)+' &middot; n='+origIdxs.length+'</div>' +
+        '<div class="seg-metrics">' + cols.map(function(cn,j){ return '<span>'+esc(cn)+' <b>'+fmtFeat(cn, centersReal[c][j])+'</b></span>'; }).join('') + '</div>' +
+        (topTags.length ? '<div class="tagrow">' + topTags.map(function(t){ return '<span class="tagchip">'+esc(t)+' &times;'+tags[t]+'</span>'; }).join('') + '</div>' : '');
+      host.appendChild(card);
+    }
+  }
+
+  /* ============== RENDER: stability ============== */
+  function renderStability(){
+    var p = pal();
+    var host = document.getElementById('stabCard');
+    host.innerHTML = '';
+    if (!state.result){ host.innerHTML = '<p class="note">Carga datos y elige variables para calcular estabilidad.</p>'; return; }
+    var stab = bootstrapStability(state.Xs, state.result.labels, state.k, 60, 817234);
+    stab.forEach(function(v, c){
+      var qual = v>0.75 ? ['Muy bueno', 'var(--good)'] : v>=0.6 ? ['Razonable', 'var(--warn)'] : ['Inestable', 'var(--critical)'];
+      var row = document.createElement('div');
+      row.className = 'stab-row';
+      row.innerHTML =
+        '<span class="seg-dot" style="background:'+p.clusters[c%p.clusters.length]+'"></span>' +
+        '<span style="font-size:13px;min-width:92px;">Segmento '+(c+1)+'</span>' +
+        '<span class="stab-bar"><span class="stab-fill" style="width:'+(v*100).toFixed(0)+'%; background:'+p.clusters[c%p.clusters.length]+'"></span></span>' +
+        '<span class="stab-label mono">'+v.toFixed(3)+'</span>' +
+        '<span class="stab-qual" style="color:'+qual[1]+'">'+qual[0]+'</span>';
+      host.appendChild(row);
+    });
+  }
+
+  /* ============== RENDER: interpretation ============== */
+  function renderInterpretation(){
+    var host = document.getElementById('interpretHost');
+    var desc = document.getElementById('interpretDesc');
+    if (state.isDefault && state.k === 3){
+      desc.textContent = 'Con tres segmentos —el más fácil de explicar al negocio— cada grupo pide una política distinta.';
+      host.innerHTML =
+        '<div class="grid-3">' +
+          '<div class="card policy-card"><div class="kicker">Segmento ticket alto</div><h3>Piezas especiales y decoración</h3><p>Precio alto (&sim;$222.000), cero pedidos convertidos en la simulación. Mismo hallazgo que el Laboratorio de Precios: a ese precio la utilidad da negativa &mdash; no es un segmento para empujar volumen, es para rediseñar la oferta o el empaque antes de insistir en precio.</p></div>' +
+          '<div class="card policy-card"><div class="kicker">Segmento núcleo</div><h3>Jabones, velas, mascotas y regalos</h3><p>Precio bajo (&sim;$83.000), la mayor tasa de conversión (&sim;37%) y el mayor volumen de pedidos. Es el motor de ingresos recurrentes del catálogo &mdash; candidato natural al Pack Emprendedor.</p></div>' +
+          '<div class="card policy-card"><div class="kicker">Segmento intermedio</div><h3>Repostería y decoración de ticket medio</h3><p>Precio medio (&sim;$153.000), conversión media (&sim;26%). Punto de partida razonable para probar paquetes o descuentos por volumen antes de tocar el precio base.</p></div>' +
+        '</div>';
+      return;
+    }
+    desc.textContent = 'Lee los centros y las etiquetas de cada segmento en la sección 4 para escribir aquí tu propia interpretación de negocio.';
+    if (!state.result){ host.innerHTML = '<p class="note">Carga datos y elige variables para ver segmentos.</p>'; return; }
+    var p = pal();
+    var cols = state.featCols.filter(Boolean);
+    var centersReal = state.result.centers.map(function(c){ return c.map(function(v,j){ return v*state.STD.std[j]+state.STD.mean[j]; }); });
+    var html = '<div class="grid-3">';
+    for (var c=0;c<state.k;c++){
+      var n = state.result.labels.filter(function(l){return l===c;}).length;
+      html += '<div class="card policy-card"><div class="kicker" style="color:'+p.clusters[c%p.clusters.length]+'">Segmento '+(c+1)+' &middot; n='+n+'</div><h3>'+cols.map(function(cn,j){return esc(cn)+': '+fmtFeat(cn,centersReal[c][j]);}).join(' · ')+'</h3><p>Escribe aquí qué significa este grupo para tu negocio: quiénes son, qué política de precio, producto o canal le conviene.</p></div>';
+    }
+    html += '</div>';
+    host.innerHTML = html;
+  }
+
+  /* ============== pill nav ============== */
+  function renderPillNav(){
+    var sections = Array.prototype.slice.call(document.querySelectorAll('section.step'));
+    var host = document.getElementById('pillnav');
+    host.innerHTML = '';
+    sections.forEach(function(sec){
+      var pill = document.createElement('button');
+      pill.className = 'pill'; pill.type='button';
+      pill.textContent = sec.getAttribute('data-title');
+      pill.addEventListener('click', function(){ sec.scrollIntoView({behavior:'smooth', block:'start'}); });
+      host.appendChild(pill);
+      sec._pill = pill;
+    });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting) sections.forEach(function(s){ s._pill.classList.toggle('active', s===en.target); });
+      });
+    }, { rootMargin: '-40% 0px -50% 0px' });
+    sections.forEach(function(s){ io.observe(s); });
+  }
+
+  function renderAll(){
+    renderHead();
+    renderColSelects();
+    renderKChips();
+    renderASWChart();
+    renderScatter();
+    renderSegCards();
+    renderStability();
+    renderInterpretation();
+  }
+
+  /* ============== wiring ============== */
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  dropzone.addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(e){ if (e.target.files[0]) parseFile(e.target.files[0]); });
+  dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('drag'); });
+  dropzone.addEventListener('drop', function(e){
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]);
+  });
+  document.getElementById('btnRestore').addEventListener('click', function(){
+    state.rows = buildDefaultRows();
+    state.columns = ['Fecha','categoria','canal','Precio_cotizado_promedio','Pedidos_convertidos','Consultas_recibidas','Tasa_conversion'];
+    state.numericCols = ['Precio_cotizado_promedio','Pedidos_convertidos','Consultas_recibidas','Tasa_conversion'];
+    state.textCols = ['Fecha','categoria','canal'];
+    state.featCols = ['Precio_cotizado_promedio','Pedidos_convertidos','Tasa_conversion'];
+    state.tagCol = 'categoria'; state.tagCol2 = 'canal';
+    state.isDefault = true;
+    showStatus('Usando la bitácora de leads simulada de Tu Idea en 3D — 36 filas (6 categorías × 6 meses), la misma del Laboratorio de Precios.', false);
+    rebuildPipeline();
+    renderAll();
+  });
+
+  showStatus('Usando la bitácora de leads simulada de Tu Idea en 3D — 36 filas (6 categorías × 6 meses), la misma del Laboratorio de Precios. Reemplázala por tu propia tabla arriba en cuanto la tengas.', false);
+  rebuildPipeline();
+  renderPillNav();
+  renderAll();
+  window.addEventListener('resize', function(){ renderASWChart(); renderScatter(); });
+
+  var boot = function(){};
+  if (window.claude && window.claude.hot){
+    window.claude.hot.ready ? window.claude.hot.ready(boot) : boot();
+  }
+})();
+</script>
+</body>
+</html>
