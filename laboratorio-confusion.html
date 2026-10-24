@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio de Matriz de Confusión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== Design plan =====
+   Layout: worksheet. Hero -> case chips -> matrix (editable, course's own
+   orange/green/yellow/blue quadrant convention) beside live metric cards ->
+   precision/recall interpretation grid -> a rule-threshold exercise on the
+   practice dataset -> a short tie-in to Tu Idea en 3D's lead-scoring goal.
+   Color: --bg/--panel/--ink/--ink-soft/--line neutral (cool, blue-biased)
+          --accent navy (the course deck's own title blue)
+          --tp/--fn/--fp/--tn: the four quadrant colors Hugo's slides use
+   Type: Fraunces (display, numerals) / IBM Plex Sans (body) / IBM Plex Mono (data)
+*/
+:root{
+  --bg:#f5f6f9; --panel:#ffffff; --panel-2:#eef0f5;
+  --ink:#171b23; --ink-soft:#5a6373; --ink-faint:#8690a1;
+  --line:#dde1e9; --line-soft:#eceef3;
+  --accent:#20355f; --accent-soft:#eef1f8;
+  --tp:#d9731f; --tp-ink:#5c2e05; --tp-bg:#fbe6d4;
+  --fn:#2a8f68; --fn-ink:#0f3d2c; --fn-bg:#dcf0e6;
+  --fp:#c99413; --fp-ink:#4a3303; --fp-bg:#faecc8;
+  --tn:#2f6fb0; --tn-ink:#0f2c48; --tn-bg:#dde8f5;
+  --good:#1b7a3d; --bad:#b23b3b;
+  --radius:14px;
+  --font-display:'Fraunces', Georgia, serif;
+  --font-body:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141a; --panel:#181c24; --panel-2:#1f2430;
+    --ink:#eef0f5; --ink-soft:#a7afc0; --ink-faint:#747d8f;
+    --line:#2a3040; --line-soft:#222733;
+    --accent:#7fa0e0; --accent-soft:#1c2740;
+    --tp:#e08a3f; --tp-ink:#ffe3c4; --tp-bg:#3a2510;
+    --fn:#49b388; --fn-ink:#c9f3e0; --fn-bg:#10301f;
+    --fp:#dcb039; --fp-ink:#fbeec0; --fp-bg:#3a2d0a;
+    --tn:#5f9bdd; --tn-ink:#cfe3f8; --tn-bg:#132c47;
+    --good:#4fbf78; --bad:#e2726f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141a; --panel:#181c24; --panel-2:#1f2430;
+  --ink:#eef0f5; --ink-soft:#a7afc0; --ink-faint:#747d8f;
+  --line:#2a3040; --line-soft:#222733;
+  --accent:#7fa0e0; --accent-soft:#1c2740;
+  --tp:#e08a3f; --tp-ink:#ffe3c4; --tp-bg:#3a2510;
+  --fn:#49b388; --fn-ink:#c9f3e0; --fn-bg:#10301f;
+  --fp:#dcb039; --fp-ink:#fbeec0; --fp-bg:#3a2d0a;
+  --tn:#5f9bdd; --tn-ink:#cfe3f8; --tn-bg:#132c47;
+  --good:#4fbf78; --bad:#e2726f;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:15px; line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1040px; margin:0 auto; padding-block:48px 72px; display:flex; flex-direction:column; gap:40px}
+h1,h2,h3{font-family:var(--font-display); color:var(--ink); margin:0; text-wrap:balance}
+h2{font-size:22px; font-weight:600}
+h3{font-size:16px; font-weight:600}
+p{margin:0}
+.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+
+/* ---- hero ---- */
+.hero{display:flex; flex-direction:column; gap:14px}
+.eyebrow{font-size:12.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); font-weight:600}
+.hero h1{font-size:clamp(30px,5vw,42px); font-weight:700}
+.hero p{max-width:62ch; color:var(--ink-soft); font-size:16px}
+.hero .meta{display:flex; flex-wrap:wrap; gap:8px 18px; font-size:13px; color:var(--ink-faint); margin-top:4px}
+.hero .meta span{display:inline-flex; align-items:center; gap:6px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--ink-faint)}
+
+/* ---- section shell ---- */
+section{display:flex; flex-direction:column; gap:16px}
+.section-head{display:flex; flex-direction:column; gap:4px}
+.section-head p{color:var(--ink-soft); font-size:14px; max-width:68ch}
+
+/* ---- preset chips ---- */
+.chip-group{display:flex; flex-direction:column; gap:8px}
+.chip-group-label{font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); font-weight:600}
+.chip-row{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  font-family:var(--font-body); font-size:13.5px; font-weight:500; color:var(--ink);
+  background:var(--panel); border:1px solid var(--line); border-radius:999px;
+  padding:9px 16px; cursor:pointer; transition:border-color .15s, background .15s, transform .1s;
+}
+.chip:hover{border-color:var(--accent)}
+.chip:active{transform:scale(.98)}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+
+/* ---- workspace ---- */
+.workspace{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:24px; align-items:start}
+@media (max-width:760px){ .workspace{grid-template-columns:1fr} }
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px; display:flex; flex-direction:column; gap:16px; min-width:0}
+.panel-title{display:flex; flex-direction:column; gap:4px}
+.panel-title h3{font-size:17px}
+.note{font-size:13px; color:var(--ink-soft); line-height:1.5}
+.note.warn{color:var(--fp-ink); background:var(--fp-bg); border-radius:10px; padding:10px 12px}
+
+/* matrix grid */
+.matrix-wrap{display:grid; grid-template-columns:auto auto auto; gap:6px; width:fit-content; max-width:100%}
+.mx-corner{min-width:84px}
+.mx-colhead, .mx-rowhead{
+  font-size:12px; font-weight:600; color:var(--ink-soft); text-align:center;
+  display:flex; align-items:center; justify-content:center; padding:4px; text-wrap:balance;
+}
+.mx-rowhead{justify-content:flex-end; text-align:right; min-width:84px; max-width:110px}
+.mx-cell{
+  position:relative; border-radius:10px; padding:14px 10px 10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  min-width:110px; min-height:84px;
+}
+.mx-cell .tag{font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; opacity:.85}
+.mx-cell input{
+  width:100%; text-align:center; font-family:var(--font-mono); font-size:22px; font-weight:600;
+  background:transparent; border:none; border-bottom:2px solid transparent; color:inherit; padding:2px 0;
+}
+.mx-cell input:focus{outline:none; border-bottom-color:currentColor}
+.mx-cell.tp{background:var(--tp-bg); color:var(--tp-ink)}
+.mx-cell.fn{background:var(--fn-bg); color:var(--fn-ink)}
+.mx-cell.fp{background:var(--fp-bg); color:var(--fp-ink)}
+.mx-cell.tn{background:var(--tn-bg); color:var(--tn-ink)}
+
+.totals-row{display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line-soft); padding-top:12px}
+.totals-row b{color:var(--ink); font-family:var(--font-mono)}
+
+/* metrics */
+.stat-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.stat-tile{background:var(--panel-2); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:2px}
+.stat-tile .label{font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; font-weight:600}
+.stat-tile .value{font-family:var(--font-display); font-size:28px; font-weight:700}
+.stat-tile .value.good{color:var(--good)}
+.stat-tile .value.bad{color:var(--bad)}
+
+.class-metrics{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media (max-width:500px){ .class-metrics{grid-template-columns:1fr} }
+.class-col{display:flex; flex-direction:column; gap:10px}
+.class-col-head{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600}
+.class-swatch{width:10px;height:10px;border-radius:3px}
+.metric-row{display:flex; flex-direction:column; gap:2px; padding:10px 12px; background:var(--panel-2); border-radius:9px}
+.metric-row .mname{font-size:12.5px; color:var(--ink-soft); font-weight:600}
+.metric-row .mformula{font-family:var(--font-mono); font-size:12px; color:var(--ink-faint)}
+.metric-row .mvalue{font-family:var(--font-mono); font-size:19px; font-weight:600; margin-top:1px}
+
+/* interpretation quad */
+.quad-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+@media (max-width:560px){ .quad-grid{grid-template-columns:1fr} }
+.quad-cell{border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:var(--panel); display:flex; flex-direction:column; gap:4px; transition:border-color .15s, background .15s}
+.quad-cell .qtitle{font-size:13px; font-weight:700}
+.quad-cell .qdesc{font-size:13px; color:var(--ink-soft)}
+.quad-cell.active{border-color:var(--accent); background:var(--accent-soft)}
+.quad-cell.active .qtitle{color:var(--accent)}
+
+/* exercise */
+.exercise-body{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:20px; align-items:start}
+@media (max-width:760px){ .exercise-body{grid-template-columns:1fr} }
+.rule-control{display:flex; flex-direction:column; gap:8px; margin-bottom:4px}
+.rule-control .rtitle{font-size:13px; color:var(--ink-soft)}
+.rule-control input[type=range]{width:100%; accent-color:var(--accent)}
+.rule-readout{font-family:var(--font-mono); font-size:14px; font-weight:600}
+.data-table{width:100%; border-collapse:collapse; font-size:13px}
+.data-table th{text-align:right; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); font-weight:600; padding:0 8px 6px; border-bottom:1px solid var(--line)}
+.data-table td{text-align:right; padding:6px 8px; font-family:var(--font-mono); border-bottom:1px solid var(--line-soft)}
+.data-table th:first-child, .data-table td:first-child{text-align:left}
+.badge{display:inline-flex; align-items:center; justify-content:center; font-family:var(--font-body); font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px}
+.badge.tp{background:var(--tp-bg); color:var(--tp-ink)}
+.badge.fn{background:var(--fn-bg); color:var(--fn-ink)}
+.badge.fp{background:var(--fp-bg); color:var(--fp-ink)}
+.badge.tn{background:var(--tn-bg); color:var(--tn-ink)}
+
+/* business tie-in */
+.business-panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px; display:flex; flex-direction:column; gap:14px}
+.business-panel p{color:var(--ink-soft); font-size:14px; max-width:72ch}
+.link-row{display:flex; flex-wrap:wrap; gap:10px}
+.link-chip{font-size:13px; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:8px 14px; text-decoration:none; font-weight:600}
+.link-chip:hover{text-decoration:underline}
+
+footer{border-top:1px solid var(--line); padding-top:18px; display:flex; flex-wrap:wrap; gap:8px 18px; justify-content:space-between; color:var(--ink-faint); font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Marketing Analytics · Hugo Martínez Gallego</span>
+    <h1>Laboratorio de Matriz de Confusión</h1>
+    <p>Elige un caso, edita la matriz 2×2 y mira cómo se recalculan exactitud, precisión, exhaustividad, F1 y la tasa de error — con las mismas fórmulas y el mismo convenio de colores del curso.</p>
+    <div class="meta">
+      <span><span class="dot"></span>TP/FN/FP/TN editables</span>
+      <span><span class="dot"></span>9 casos precargados</span>
+      <span><span class="dot"></span>ejercicio de regla sobre datos de práctica</span>
+    </div>
+  </div>
+
+  <section class="presets">
+    <div class="section-head">
+      <h2>1 · Elige un caso</h2>
+      <p>Siete vienen directo del taller de clase (incluida la paradoja del accuracy con gatos y perros); dos están adaptados al objetivo de scoring de leads de Tu Idea en 3D.</p>
+    </div>
+    <div id="chipGroups"></div>
+  </section>
+
+  <section class="workspace">
+    <div class="panel">
+      <div class="panel-title">
+        <h3 id="matrixTitle">—</h3>
+        <p class="note" id="matrixNote"></p>
+      </div>
+      <div class="matrix-wrap" id="matrixWrap"></div>
+      <div class="totals-row" id="totalsRow"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><h3>Métricas en vivo</h3></div>
+      <div class="stat-tiles" id="statTiles"></div>
+      <div class="class-metrics" id="classMetrics"></div>
+    </div>
+  </section>
+
+  <section class="interpret">
+    <div class="section-head">
+      <h2>2 · Cómo leer precisión y exhaustividad</h2>
+      <p>Ubicación de la clase positiva actual dentro de los cuatro escenarios que enseña el curso.</p>
+    </div>
+    <div class="quad-grid" id="quadGrid"></div>
+  </section>
+
+  <section class="exercise">
+    <div class="section-head">
+      <h2>3 · Ejercicio: clasifica con una regla simple</h2>
+      <p>12 registros de práctica (edad, saldo, satisfecho) de la hoja de ejercicios del curso. Mueve el umbral de saldo — es exactamente la Fase 1 de CRISP-DM de Tu Idea en 3D (reglas de negocio antes de entrenar un modelo, sección 4.1): predice "satisfecho = 1" cuando el saldo supera el umbral, y mira la matriz de confusión resultante.</p>
+    </div>
+    <div class="panel">
+      <div class="exercise-body">
+        <div>
+          <div class="rule-control">
+            <span class="rtitle">Regla: predicho = 1 si saldo ≥ umbral</span>
+            <input type="range" id="thresholdSlider" min="-100" max="4200" step="25" value="500">
+            <span class="rule-readout">umbral = $<span id="thresholdValue" class="num"></span></span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Edad</th><th>Saldo</th><th>Real</th><th>Predicho</th><th>Resultado</th></tr></thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+        <div id="exercisePanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="business">
+    <div class="section-head">
+      <h2>4 · Aplicado a Tu Idea en 3D</h2>
+    </div>
+    <div class="business-panel">
+      <p>El objetivo de minería de datos 2 del documento CRISP-DM (sección 1.5) es predecir si una consulta se convierte en pedido pagado. Esa predicción, igual que "gato o perro" o "satisfecho sí/no", se evalúa con exactamente esta misma matriz de confusión. Los dos últimos casos de arriba la aplican: el primero reusa el ejemplo del curso con las etiquetas "Convierte / No convierte"; el segundo reconstruye — a partir de la exactitud, precisión y recall ya reportados en la sección 4.4 — la matriz del Árbol de Decisión entrenado sobre el dataset real de Kaggle, el modelo que valida la técnica de scoring para el negocio.</p>
+      <p>Cuando la bitácora de leads tenga datos propios, el mismo flujo de este laboratorio (cargar TP/FP/FN/TN, leer las métricas, ubicar el cuadrante de precisión/exhaustividad) se repite con las cifras reales de Tu Idea en 3D.</p>
+      <div class="link-row">
+        <a class="link-chip" href="https://claude.ai/artifact/CsjiBPEd6f5urMVXGrb2zn" target="_blank" rel="noopener">Laboratorio de Precios →</a>
+        <a class="link-chip" href="https://claude.ai/artifact/6twwCRRxmTPjaZVSWVjHrT" target="_blank" rel="noopener">Taller Estimación de Precio →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Tu Idea en 3D · Marketing Analytics</span>
+    <span>Datos de clase: Hugo Martínez Gallego — matrizdeconfusion.xlsx</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PRESETS = [
+    { id:"cp1", group:"Ejemplos de clase", title:"Gato/Perro — paradoja del accuracy",
+      pos:"Gato", neg:"Perro", tp:990, fn:0, fp:10, tn:0,
+      note:"Un modelo que siempre predice “Gato” llega a 99% de accuracy sin detectar un solo perro: el accuracy por sí solo esconde esto." },
+    { id:"cp2", group:"Ejemplos de clase", title:"Gato/Perro — cero errores",
+      pos:"Gato", neg:"Perro", tp:550, fn:0, fp:0, tn:450,
+      note:"Caso ideal: todas las predicciones coinciden con el valor real." },
+    { id:"cp3", group:"Ejemplos de clase", title:"Gato/Perro — mucha confusión",
+      pos:"Gato", neg:"Perro", tp:100, fn:500, fp:300, tn:100,
+      note:"El modelo confunde activamente ambas clases en los dos sentidos." },
+    { id:"cp4", group:"Ejemplos de clase", title:"Sí/No — ejemplo genérico",
+      pos:"Sí", neg:"No", tp:140, fn:60, fp:20, tn:80,
+      note:"El ejemplo con el que el curso introduce TP, FP, FN y TN." },
+    { id:"cp5", group:"Ejemplos de clase", title:"Clase 0/1 — ejemplo A",
+      pos:"0", neg:"1", tp:474, fn:24, fp:77, tn:64, note:"" },
+    { id:"cp6", group:"Ejemplos de clase", title:"Clase 0/1 — ejemplo B",
+      pos:"0", neg:"1", tp:153, fn:8, fp:35, tn:17, note:"" },
+    { id:"cp7", group:"Ejemplos de clase", title:"Clase 0/1 — muy desbalanceado",
+      pos:"0", neg:"1", tp:990000, fn:100, fp:35, tn:54800,
+      note:"Casi un millón de casos en la clase positiva; la clase negativa es rara." },
+    { id:"biz", group:"Tu Idea en 3D", title:"Scoring de leads — ¿convierte?",
+      pos:"Convierte", neg:"No convierte", tp:140, fn:60, fp:20, tn:80,
+      note:"Ilustrativo: mismas cifras del caso Sí/No del curso, reetiquetadas para el objetivo 2 de minería de datos (sección 1.5 del documento CRISP-DM). Se recalcula con datos reales en cuanto la bitácora de leads los tenga." },
+    { id:"kaggle", group:"Tu Idea en 3D", title:"Kaggle Lead Scoring — Árbol de Decisión",
+      pos:"Convierte", neg:"No convierte", tp:528, fn:183, fp:177, tn:960,
+      note:"Reconstruido a partir de la exactitud (80,5%), precisión (74,9%) y recall (74,3%) ya reportados en la sección 4.4 del documento CRISP-DM — el notebook no guardó los conteos TP/FP/FN/TN exactos en esta sesión; estas cifras los reproducen de forma consistente, no son el dato original." }
+  ];
+
+  var PRACTICE = [
+    {edad:30, saldo:1787, real:1},
+    {edad:33, saldo:4108, real:0},
+    {edad:35, saldo:1350, real:1},
+    {edad:30, saldo:1476, real:1},
+    {edad:59, saldo:0,    real:1},
+    {edad:35, saldo:747,  real:1},
+    {edad:36, saldo:307,  real:0},
+    {edad:39, saldo:147,  real:1},
+    {edad:41, saldo:221,  real:0},
+    {edad:43, saldo:-88,  real:0},
+    {edad:39, saldo:3374, real:1},
+    {edad:43, saldo:264,  real:0}
+  ];
+
+  var state = { current: JSON.parse(JSON.stringify(PRESETS[3])) };
+
+  function fmt(n){
+    if (!isFinite(n)) return "—";
+    return Math.round(n).toLocaleString("es-CO");
+  }
+  function pct(x){
+    if (!isFinite(x)) return "—";
+    return (x*100).toFixed(1).replace(".", ",") + "%";
+  }
+  function safeDiv(a,b){ return b === 0 ? NaN : a/b; }
+
+  function computeMetrics(m){
+    var total = m.tp+m.fn+m.fp+m.tn;
+    var acc = safeDiv(m.tp+m.tn, total);
+    var precPos = safeDiv(m.tp, m.tp+m.fp);
+    var recPos  = safeDiv(m.tp, m.tp+m.fn);
+    var f1Pos   = (precPos+recPos) ? 2*precPos*recPos/(precPos+recPos) : NaN;
+    var precNeg = safeDiv(m.tn, m.tn+m.fn);
+    var recNeg  = safeDiv(m.tn, m.tn+m.fp);
+    var f1Neg   = (precNeg+recNeg) ? 2*precNeg*recNeg/(precNeg+recNeg) : NaN;
+    var oer = safeDiv(m.fp+m.fn, total);
+    var pctPos = safeDiv(m.tp+m.fn, total);
+    var pctNeg = safeDiv(m.fp+m.tn, total);
+    return { total:total, acc:acc, precPos:precPos, recPos:recPos, f1Pos:f1Pos,
+             precNeg:precNeg, recNeg:recNeg, f1Neg:f1Neg, oer:oer, pctPos:pctPos, pctNeg:pctNeg };
+  }
+
+  // ---------- preset chips ----------
+  function renderChips(){
+    var groups = {};
+    var order = [];
+    PRESETS.forEach(function(p){
+      if (!groups[p.group]){ groups[p.group] = []; order.push(p.group); }
+      groups[p.group].push(p);
+    });
+    var host = document.getElementById("chipGroups");
+    host.innerHTML = "";
+    order.forEach(function(g){
+      var wrap = document.createElement("div");
+      wrap.className = "chip-group";
+      var label = document.createElement("div");
+      label.className = "chip-group-label";
+      label.textContent = g;
+      var row = document.createElement("div");
+      row.className = "chip-row";
+      groups[g].forEach(function(p){
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.textContent = p.title;
+        chip.setAttribute("aria-pressed", p.id === state.current.id ? "true" : "false");
+        chip.addEventListener("click", function(){
+          state.current = JSON.parse(JSON.stringify(p));
+          renderAll();
+        });
+        chip.dataset.id = p.id;
+        row.appendChild(chip);
+      });
+      wrap.appendChild(label);
+      wrap.appendChild(row);
+      host.appendChild(wrap);
+    });
+  }
+
+  // ---------- matrix ----------
+  function renderMatrix(){
+    var m = state.current;
+    document.getElementById("matrixTitle").textContent = m.title;
+    var noteEl = document.getElementById("matrixNote");
+    if (m.note){ noteEl.textContent = m.note; noteEl.style.display = ""; }
+    else { noteEl.style.display = "none"; }
+
+    var wrap = document.getElementById("matrixWrap");
+    wrap.innerHTML = "";
+
+    function corner(){ var d=document.createElement("div"); d.className="mx-corner"; return d; }
+    function colhead(txt){ var d=document.createElement("div"); d.className="mx-colhead"; d.textContent=txt; return d; }
+    function rowhead(txt){ var d=document.createElement("div"); d.className="mx-rowhead"; d.textContent=txt; return d; }
+    function cell(key, cls, tag){
+      var d = document.createElement("div");
+      d.className = "mx-cell " + cls;
+      var t = document.createElement("div");
+      t.className = "tag";
+      t.textContent = tag;
+      var inp = document.createElement("input");
+      inp.type = "number";
+      inp.min = "0";
+      inp.inputMode = "numeric";
+      inp.value = m[key];
+      inp.id = "cell-" + key;
+      inp.addEventListener("input", function(){
+        var v = parseFloat(inp.value);
+        state.current[key] = isNaN(v) ? 0 : Math.max(0, v);
+        renderMetricsAndDependents();
+      });
+      d.appendChild(t);
+      d.appendChild(inp);
+      return d;
+    }
+
+    wrap.appendChild(corner());
+    wrap.appendChild(colhead("Predicción: " + m.pos));
+    wrap.appendChild(colhead("Predicción: " + m.neg));
+
+    wrap.appendChild(rowhead("Real: " + m.pos));
+    wrap.appendChild(cell("tp","tp","TP"));
+    wrap.appendChild(cell("fn","fn","FN"));
+
+    wrap.appendChild(rowhead("Real: " + m.neg));
+    wrap.appendChild(cell("fp","fp","FP"));
+    wrap.appendChild(cell("tn","tn","TN"));
+
+    renderTotals();
+  }
+
+  function renderTotals(){
+    var m = state.current;
+    var met = computeMetrics(m);
+    var el = document.getElementById("totalsRow");
+    el.innerHTML =
+      "<span>Total: <b class=\"num\">" + fmt(met.total) + "</b></span>" +
+      "<span>% real " + esc(m.pos) + ": <b class=\"num\">" + pct(met.pctPos) + "</b></span>" +
+      "<span>% real " + esc(m.neg) + ": <b class=\"num\">" + pct(met.pctNeg) + "</b></span>";
+  }
+
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // ---------- metrics panel ----------
+  function renderMetrics(){
+    var m = state.current;
+    var met = computeMetrics(m);
+
+    var tiles = document.getElementById("statTiles");
+    tiles.innerHTML = "";
+    function tile(label, value, good){
+      var d = document.createElement("div");
+      d.className = "stat-tile";
+      d.innerHTML = "<span class=\"label\">" + esc(label) + "</span>" +
+        "<span class=\"value" + (good === true ? " good" : good === false ? " bad" : "") + " num\">" + pct(value) + "</span>";
+      return d;
+    }
+    tiles.appendChild(tile("Accuracy", met.acc, met.acc >= 0.8 ? true : met.acc < 0.5 ? false : null));
+    tiles.appendChild(tile("Overall Error Rate", met.oer, met.oer <= 0.2 ? true : met.oer > 0.5 ? false : null));
+
+    var cm = document.getElementById("classMetrics");
+    cm.innerHTML = "";
+    function classCol(label, swatchCls, prec, rec, f1){
+      var d = document.createElement("div");
+      d.className = "class-col";
+      d.innerHTML =
+        "<div class=\"class-col-head\"><span class=\"class-swatch\" style=\"background:var(--" + swatchCls + ")\"></span>Clase " + esc(label) + "</div>" +
+        "<div class=\"metric-row\"><span class=\"mname\">Precisión / Especificidad</span>" +
+          "<span class=\"mformula\">TP′/(TP′+FP′)</span>" +
+          "<span class=\"mvalue\">" + pct(prec) + "</span></div>" +
+        "<div class=\"metric-row\"><span class=\"mname\">Exhaustividad / Recall</span>" +
+          "<span class=\"mformula\">TP′/(TP′+FN′)</span>" +
+          "<span class=\"mvalue\">" + pct(rec) + "</span></div>" +
+        "<div class=\"metric-row\"><span class=\"mname\">F1-Score</span>" +
+          "<span class=\"mformula\">2 · P · R / (P+R)</span>" +
+          "<span class=\"mvalue\">" + pct(f1) + "</span></div>";
+      return d;
+    }
+    cm.appendChild(classCol(m.pos, "tp", met.precPos, met.recPos, met.f1Pos));
+    cm.appendChild(classCol(m.neg, "tn", met.precNeg, met.recNeg, met.f1Neg));
+
+    renderQuad(met.precPos, met.recPos, m.pos);
+  }
+
+  // ---------- interpretation quadrant ----------
+  function renderQuad(prec, rec, posLabel){
+    var highP = isFinite(prec) && prec >= 0.7;
+    var highR = isFinite(rec) && rec >= 0.7;
+    var cells = [
+      { key:"hh", title:"Alta precisión y alto recall", desc:"El modelo maneja perfectamente la clase “" + posLabel + "”.", active: highP && highR },
+      { key:"hl", title:"Alta precisión y bajo recall", desc:"No detecta bien la clase, pero cuando lo hace es confiable.", active: highP && !highR },
+      { key:"lh", title:"Baja precisión y alto recall", desc:"Detecta casi todos los casos reales, pero mezcla otras clases.", active: !highP && highR },
+      { key:"ll", title:"Baja precisión y bajo recall", desc:"El modelo no logra clasificar la clase correctamente.", active: !highP && !highR }
+    ];
+    var host = document.getElementById("quadGrid");
+    host.innerHTML = "";
+    cells.forEach(function(c){
+      var d = document.createElement("div");
+      d.className = "quad-cell" + (c.active ? " active" : "");
+      d.innerHTML = "<span class=\"qtitle\">" + esc(c.title) + "</span><span class=\"qdesc\">" + esc(c.desc) + "</span>";
+      host.appendChild(d);
+    });
+  }
+
+  function renderMetricsAndDependents(){
+    renderTotals();
+    renderMetrics();
+  }
+
+  // ---------- exercise ----------
+  function renderExercise(){
+    var slider = document.getElementById("thresholdSlider");
+    var valueEl = document.getElementById("thresholdValue");
+    var body = document.getElementById("dataTableBody");
+    var panel = document.getElementById("exercisePanel");
+
+    function update(){
+      var threshold = parseFloat(slider.value);
+      valueEl.textContent = fmt(threshold);
+      body.innerHTML = "";
+      var tp=0, fn=0, fp=0, tn=0;
+      PRACTICE.forEach(function(row){
+        var pred = row.saldo >= threshold ? 1 : 0;
+        var kind;
+        if (row.real === 1 && pred === 1){ kind="tp"; tp++; }
+        else if (row.real === 1 && pred === 0){ kind="fn"; fn++; }
+        else if (row.real === 0 && pred === 1){ kind="fp"; fp++; }
+        else { kind="tn"; tn++; }
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + row.edad + "</td>" +
+          "<td>$" + fmt(row.saldo) + "</td>" +
+          "<td>" + row.real + "</td>" +
+          "<td>" + pred + "</td>" +
+          "<td><span class=\"badge " + kind + "\">" + kind.toUpperCase() + "</span></td>";
+        body.appendChild(tr);
+      });
+
+      var met = computeMetrics({tp:tp, fn:fn, fp:fp, tn:tn});
+      panel.innerHTML =
+        "<div class=\"stat-tiles\">" +
+          "<div class=\"stat-tile\"><span class=\"label\">Accuracy</span><span class=\"value num\">" + pct(met.acc) + "</span></div>" +
+          "<div class=\"stat-tile\"><span class=\"label\">Error Rate</span><span class=\"value num\">" + pct(met.oer) + "</span></div>" +
+        "</div>" +
+        "<div class=\"metric-row\" style=\"margin-top:10px\"><span class=\"mname\">Precisión (satisfecho = 1)</span>" +
+          "<span class=\"mformula\">TP/(TP+FP) = " + tp + "/(" + tp + "+" + fp + ")</span>" +
+          "<span class=\"mvalue\">" + pct(met.precPos) + "</span></div>" +
+        "<div class=\"metric-row\"><span class=\"mname\">Exhaustividad (satisfecho = 1)</span>" +
+          "<span class=\"mformula\">TP/(TP+FN) = " + tp + "/(" + tp + "+" + fn + ")</span>" +
+          "<span class=\"mvalue\">" + pct(met.recPos) + "</span></div>";
+    }
+
+    slider.addEventListener("input", update);
+    update();
+  }
+
+  function renderAll(){
+    renderChips();
+    renderMatrix();
+    renderMetrics();
+  }
+
+  renderAll();
+  renderExercise();
+
+  var boot = function(){};
+  if (window.claude && window.claude.hot){
+    window.claude.hot.ready ? window.claude.hot.ready(boot) : boot();
+  }
+})();
+</script>
+</body>
+</html>

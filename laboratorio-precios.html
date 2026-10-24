@@ -1,0 +1,1099 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Laboratorio de Precios</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout concept: sticky brand bar + sticky pill-nav (steps 1-9) above a single
+     scrolling column of numbered sections, each a self-contained worked step. */
+  :root{
+    --bg:#f9f9f7; --surface:#fcfcfb; --surface-2:#f1efe7; --raised:#ffffff;
+    --text:#0b0b0b; --text-2:#52514e; --muted:#898781;
+    --border:rgba(11,11,11,0.10); --grid:#e1e0d9;
+    --accent:#c2410c; --accent-strong:#9a3209; --accent-soft:#fbe7da; --accent-contrast:#fffaf6;
+    --good:#0ca30c; --warn:#b5790a; --critical:#d03b3b;
+    --series-blue:#2a78d6; --series-aqua:#1baf7a; --series-violet:#6250d6; --series-red:#e34948;
+    --font-display:'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+    --font-body:'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#242320; --raised:#201f1c;
+      --text:#f0efec; --text-2:#c3c2b7; --muted:#938f86;
+      --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+      --accent:#f87800; --accent-strong:#ffa64d; --accent-soft:#3a2211; --accent-contrast:#1a0f03;
+      --good:#2fcf4e; --warn:#fab219; --critical:#ff6b6b;
+      --series-blue:#3987e5; --series-aqua:#2bc98f; --series-violet:#9085e9; --series-red:#e66767;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#242320; --raised:#201f1c;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#938f86;
+    --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+    --accent:#f87800; --accent-strong:#ffa64d; --accent-soft:#3a2211; --accent-contrast:#1a0f03;
+    --good:#2fcf4e; --warn:#fab219; --critical:#ff6b6b;
+    --series-blue:#3987e5; --series-aqua:#2bc98f; --series-violet:#9085e9; --series-red:#e66767;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:var(--font-body); margin:0;}
+  .shell{max-width:980px; margin:0 auto; padding-inline:20px;}
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0;}
+  p{margin:0; line-height:1.55;}
+  a{color:var(--accent);}
+  code, .mono{font-family:var(--font-mono);}
+  ::selection{background:var(--accent-soft); color:var(--text);}
+
+  .topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--bg); border-bottom:1px solid var(--border);}
+  .topbar-inner{max-width:980px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;}
+  .brand{display:flex; align-items:baseline; gap:9px; min-width:0;}
+  .brand-mark{width:10px; height:10px; border-radius:2px; background:var(--accent); flex:none;}
+  .brand-name{font-weight:700; font-size:15px; letter-spacing:.01em;}
+  .brand-sub{color:var(--muted); font-size:12.5px;}
+  .theme-note{font-size:11.5px; color:var(--muted);}
+
+  .pillnav{position:sticky; top:calc(env(safe-area-inset-top,0px) + 47px); z-index:29; background:var(--bg); border-bottom:1px solid var(--border);}
+  .pillnav-inner{max-width:980px; margin:0 auto; padding:9px 20px; display:flex; gap:7px; overflow-x:auto; scrollbar-width:none;}
+  .pillnav-inner::-webkit-scrollbar{display:none;}
+  .pill{flex:none; font-family:var(--font-mono); font-size:12px; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--text-2); background:var(--surface); white-space:nowrap; cursor:pointer; transition:background .15s,color .15s,border-color .15s;}
+  .pill:hover{border-color:var(--accent);}
+  .pill.active{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast); font-weight:600;}
+
+  .hero{padding:30px 0 22px;}
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); font-weight:600;}
+  .hero h1{font-size:clamp(24px,4vw,32px); margin-top:6px; font-weight:700;}
+  .hero p.lede{margin-top:10px; max-width:62ch; color:var(--text-2); font-size:15px;}
+  .badges{display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;}
+  .badge{font-size:12px; border:1px solid var(--border); background:var(--surface); padding:5px 10px; border-radius:7px; color:var(--text-2); display:flex; gap:6px; align-items:center;}
+  .badge b{color:var(--text); font-weight:600;}
+
+  section.step{padding:34px 0; border-top:1px solid var(--border);}
+  section.step:first-of-type{border-top:none;}
+  .step-head{display:flex; gap:12px; align-items:flex-start; margin-bottom:16px;}
+  .step-num{font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:700; background:var(--accent-soft); border-radius:7px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .step-head h2{font-size:19px;}
+  .step-head p{color:var(--text-2); font-size:13.5px; margin-top:3px;}
+  .step-phase{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); font-weight:700; margin:0 0 2px;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px;}
+  .card + .card{margin-top:12px;}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  @media (max-width:720px){ .grid-2,.grid-3{grid-template-columns:1fr;} }
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;}
+  th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600;}
+  tbody tr:hover{background:var(--surface-2);}
+  .table-wrap{overflow-x:auto; border-radius:10px;}
+  .tag{display:inline-block; font-family:var(--font-mono); font-size:11px; padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--text-2); border:1px solid var(--border);}
+  .tag.num{color:var(--series-blue); border-color:color-mix(in srgb, var(--series-blue) 40%, transparent);}
+  .tag.cat{color:var(--series-violet); border-color:color-mix(in srgb, var(--series-violet) 40%, transparent);}
+  .tag.date{color:var(--series-aqua); border-color:color-mix(in srgb, var(--series-aqua) 40%, transparent);}
+
+  .stat{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px;}
+  .stat .label{font-size:11.5px; color:var(--muted); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.03em;}
+  .stat .value{font-family:var(--font-mono); font-size:22px; font-weight:600; margin-top:4px; font-variant-numeric:tabular-nums;}
+  .stat .delta{font-size:12px; margin-top:3px;}
+  .delta.up{color:var(--good);} .delta.down{color:var(--critical);}
+
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field label{font-size:12px; color:var(--text-2); font-weight:500;}
+  input[type=number], input[type=text], select{
+    font-family:var(--font-mono); font-size:13.5px; padding:8px 10px; border-radius:8px;
+    border:1px solid var(--border); background:var(--raised); color:var(--text); width:100%;
+  }
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  input:focus-visible, select:focus-visible, button:focus-visible, .pill:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  button{font-family:var(--font-body); font-size:13.5px; font-weight:600; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); padding:9px 14px; cursor:pointer;}
+  button:hover{border-color:var(--accent);}
+  button.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast);}
+  button.primary:hover{background:var(--accent-strong); border-color:var(--accent-strong);}
+  .btnrow{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .dropzone{border:1.5px dashed var(--border); border-radius:12px; padding:22px; text-align:center; cursor:pointer; background:var(--surface);}
+  .dropzone:hover{border-color:var(--accent);}
+  .dropzone input{display:none;}
+  .dropzone .dz-title{font-weight:600; font-size:14px;}
+  .dropzone .dz-sub{color:var(--muted); font-size:12.5px; margin-top:4px;}
+
+  .note{font-size:12.5px; color:var(--text-2); background:var(--surface-2); border-radius:8px; padding:10px 12px; border:1px solid var(--border);}
+  .note b{color:var(--text);}
+  .formula{font-family:var(--font-mono); font-size:14px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 13px; overflow-x:auto;}
+
+  .chart-wrap{position:relative; height:260px;}
+  .chart-wrap.short{height:200px;}
+  .legend-row{display:flex; gap:14px; flex-wrap:wrap; margin-top:8px; font-size:12px; color:var(--text-2);}
+  .legend-row .lk{display:inline-flex; align-items:center; gap:5px;}
+  .legend-row .dot{width:9px; height:9px; border-radius:50%;}
+
+  .policy-card h3{font-size:15px; margin-bottom:6px;}
+  .policy-card .kicker{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--accent); letter-spacing:.04em; font-weight:700;}
+
+  footer{padding:30px 0 50px; border-top:1px solid var(--border); margin-top:10px;}
+  footer p{color:var(--muted); font-size:12.5px; max-width:70ch;}
+  footer p + p{margin-top:8px;}
+
+  @media (prefers-reduced-motion:no-preference){
+    .pill, button, .dropzone{transition:background .15s ease,border-color .15s ease,color .15s ease;}
+  }
+</style>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Laboratorio de Precios</span>
+      <span class="brand-sub">&nbsp;· Tu Idea en 3D</span>
+    </div>
+    <span class="theme-note mono" id="rowCountNote">9 pasos</span>
+  </div>
+</div>
+<div class="pillnav">
+  <div class="pillnav-inner" id="pillnav"></div>
+</div>
+
+<div class="shell">
+  <div class="hero">
+    <div class="eyebrow">Estimación de precios · curva de demanda y utilidad · metodología CRISP-DM</div>
+    <h1>Del documento CRISP-DM a una política de precios para Tu Idea en 3D</h1>
+    <p class="lede">Nueve pasos, de principio a fin: importar la bitácora de leads propuesta en el documento CRISP-DM, entenderla, limpiarla, estimar la curva de demanda, calcular la utilidad y simular escenarios de precio &mdash; ya aplicado directamente a nuestro propio caso, categoría por categoría.</p>
+    <div class="badges">
+      <span class="badge">Sector: <b>&nbsp;diseño y prototipado 3D personalizado</b></span>
+      <span class="badge">Datos: <b>&nbsp;bitácora de leads simulada (esquema del documento CRISP-DM)</b></span>
+      <span class="badge">Negocio propio: <b>&nbsp;Tu Idea en 3D &mdash; Bogotá</b></span>
+    </div>
+  </div>
+
+  <!-- ================= PASO 1 ================= -->
+  <section class="step" id="s1" data-title="1 · Sector">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 1 &middot; Comprensión del negocio</p>
+        <h2>A qué sector pertenece la base de datos</h2>
+        <p>Identificación del origen y el sector de los datos, ya para nuestro propio caso.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="grid-2">
+        <div>
+          <p><b>Sector:</b> diseño y prototipado 3D personalizado en Bogotá &mdash; seis categorías de catálogo (velas, jabones, repostería, mascotas y regalos, decoración, piezas especiales), vendidas por Instagram, TikTok, WhatsApp Business y la tienda Shopify.</p>
+          <p style="margin-top:8px;"><b>De dónde vienen estos datos:</b> son la "bitácora de leads" que el documento CRISP-DM de Tu Idea en 3D propone empezar a registrar (sección 2.1&ndash;2.2 del documento). Como el negocio apenas está en lanzamiento y aún no acumula los 150&ndash;200 registros que ese mismo documento estima necesarios (sección 1.7.1), aquí se <b>simula</b> esa bitácora ya llena &mdash;seis categorías, cuatro meses, con precio cotizado y pedidos convertidos&mdash; para poder ensayar ya mismo el modelo completo de curva de demanda, mientras se recolectan los datos reales.</p>
+        </div>
+        <div>
+          <p><b>Nota de honestidad metodológica:</b> estas filas son simuladas, no ventas reales de Tu Idea en 3D; están calibradas para ser consistentes con las cifras reales ya conocidas del negocio (ticket promedio $120.000 COP, meta de 8 proyectos/mes, documento CRISP-DM secciones 1.2 y 2.3). En cuanto exista la bitácora real, se reemplaza este archivo por el propio en el paso 2 y todo el resto de la app &mdash; regresión, utilidad, escenarios, políticas&mdash; se recalcula solo, sin tocar código.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 2 ================= -->
+  <section class="step" id="s2" data-title="2 · Importar">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Importar la base de datos</h2>
+        <p>Cualquier archivo de datos tabulares: CSV, TSV, JSON, Excel, OpenDocument o texto delimitado. Ya viene cargado el dataset real de ejemplo &mdash; puedes reemplazarlo por el tuyo.</p>
+      </div>
+    </div>
+    <div class="card">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput">
+        <div class="dz-title">Arrastra un archivo o haz clic para elegirlo</div>
+        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods &nbsp;·&nbsp; .txt &nbsp;·&nbsp; y otros &mdash; si no reconocemos la extensión, igual intentamos detectar el formato</div>
+      </label>
+      <div id="fileStatus" class="note" style="margin-top:12px;">Usando la bitácora de leads simulada de Tu Idea en 3D &mdash; 36 filas (6 categorías &times; 6 meses, abr&ndash;sep 2026), calibrada contra las cifras reales del negocio (ticket promedio $120.000 COP, meta 8 proyectos/mes). Reemplázala por tu propia bitácora (documento CRISP-DM, sección 2.2) en cuanto tengas registros reales.</div>
+      <div class="grid-2" style="margin-top:12px;">
+        <div class="field">
+          <label for="priceColSel">Columna de precio</label>
+          <select id="priceColSel"></select>
+        </div>
+        <div class="field">
+          <label for="qtyColSel">Columna de cantidad / volumen</label>
+          <select id="qtyColSel"></select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 3 ================= -->
+  <section class="step" id="s3" data-title="3 · Primeras filas">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Primeras 5 filas</h2>
+        <p>Verificación rápida de que la estructura importada es la esperada.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="headTable"></table></div>
+      <p class="note" id="shapeNote" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ================= PASO 4 ================= -->
+  <section class="step" id="s4" data-title="4 · Tipos de variable">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Tipos de variable</h2>
+        <p>Clasificación automática: cuantitativas (continuas / discretas) y cualitativas (nominales / fecha).</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="typesTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 5 ================= -->
+  <section class="step" id="s5" data-title="5 · Limpieza">
+    <div class="step-head">
+      <div class="step-num">5</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Limpieza de datos &mdash; valores faltantes</h2>
+        <p>Diagnóstico de datos faltantes por columna y dos estrategias de limpieza.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="missingTable"></table></div>
+      <div class="btnrow" style="margin-top:12px;">
+        <button id="btnCleanDrop">Eliminar filas con faltantes</button>
+        <button id="btnCleanImpute">Imputar (mediana / moda)</button>
+        <button id="btnCleanReset">Restaurar datos originales</button>
+      </div>
+      <p class="note" id="cleanStatus" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ================= PASO 6 ================= -->
+  <section class="step" id="s6" data-title="6 · EDA">
+    <div class="step-head">
+      <div class="step-num">6</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fases 2&ndash;3 &middot; Exploración y preparación</p>
+        <h2>Análisis exploratorio y reglas de negocio</h2>
+        <p>Patrones de la bitácora simulada y lo que implican para la forma de fijar precios.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <b style="font-size:13px;">Precio cotizado promedio por categoría</b>
+        <div class="chart-wrap short"><canvas id="chartPriceByType"></canvas></div>
+      </div>
+      <div class="card">
+        <b style="font-size:13px;">Precio vs. pedidos convertidos (cada punto = categoría&times;mes)</b>
+        <div class="chart-wrap short"><canvas id="chartScatterRaw"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <b style="font-size:13px;">Tendencia del precio cotizado promedio por mes</b>
+      <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+    </div>
+    <div class="card">
+      <p><b>Reglas de negocio que deja ver el EDA:</b></p>
+      <p style="margin-top:8px;">Jabones, velas y llaveros de mascotas &mdash;las categorías más económicas del catálogo&mdash; convierten varias veces más pedidos al mes que decoración y piezas especiales, que cotizan 3 a 4 veces más caro. No es casualidad: son compras más impulsivas y de regalo, con menor barrera de precio. Para Tu Idea en 3D esto confirma la lógica del Pack Emprendedor (sección 1.6 del documento CRISP-DM, clientes recurrentes): el volumen vive en el catálogo económico, y el ticket promedio vive en las piezas especiales y de decoración &mdash; cada franja necesita su propia política de precio, no una sola para todo el catálogo.</p>
+      <p style="margin-top:8px;">La nube de puntos precio&ndash;pedidos (arriba a la derecha) baja de izquierda a derecha: a mayor precio cotizado, menos pedidos se convierten ese mes. Esa pendiente negativa es, literalmente, la curva de demanda que se estima en el paso 7 &mdash;aquí con los propios datos (simulados) de Tu Idea en 3D, no con un dataset externo.</p>
+    </div>
+  </section>
+
+  <!-- ================= PASO 7 ================= -->
+  <section class="step" id="s7" data-title="7 · Demanda y utilidad">
+    <div class="step-head">
+      <div class="step-num">7</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
+        <h2>Curva de demanda, demanda subjetiva, utilidad y costo</h2>
+        <p>Primero la curva estimada con datos reales; después la curva de juicio para Tu Idea en 3D.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <b style="font-size:13px;">7.1 &middot; Curva de demanda lineal (regresión sobre datos reales)</b>
+      <div class="chart-wrap" style="margin-top:8px;"><canvas id="chartDemandReal"></canvas></div>
+      <div class="grid-3" style="margin-top:12px;">
+        <div class="stat"><div class="label">Pendiente (b)</div><div class="value" id="statSlope">&mdash;</div></div>
+        <div class="stat"><div class="label">Intercepto (a)</div><div class="value" id="statIntercept">&mdash;</div></div>
+        <div class="stat"><div class="label">R&sup2;</div><div class="value" id="statR2">&mdash;</div></div>
+      </div>
+      <p class="note" style="margin-top:10px;">Q(Precio) = a + b&middot;Precio. Con b negativo, los pedidos convertidos caen cuando el precio cotizado sube &mdash; confirma que la técnica (regresión lineal simple) es válida para describir esta relación antes de aplicarla al negocio propio. Elasticidad estimada al precio promedio: <b id="statElasticity">&mdash;</b> (<span id="elasticityNote">&mdash;</span>).</p>
+    </div>
+
+    <div class="card">
+      <b style="font-size:13px;">7.2 &middot; Curva de demanda estimada subjetivamente (juicio de negocio &mdash; Tu Idea en 3D)</b>
+      <p class="note" style="margin-top:8px;"><b>Por qué "subjetiva":</b> Tu Idea en 3D no tiene aún historial de pedidos para estimar una curva real (ver bitácora de leads propuesta en el documento CRISP-DM). Mientras se acumulan esos datos, se usan tres puntos de referencia: precio y pedidos/mes esperados, editables abajo.</p>
+      <p class="note" style="margin-top:6px;"><b>Estado actual de los 3 puntos:</b> vienen de una <b>simulación de 20 respuestas de prueba</b> al cuestionario (no son respuestas reales todavía), para ensayar el flujo completo mientras llega la encuesta real. Pedidos/mes esperados = % de encuestados dispuestos a pagar ese precio &times; 28 consultas/mes esperadas &times; 25% de conversión base (documento CRISP-DM, sección 2.3). En cuanto tengas respuestas reales, repite este cálculo y reemplaza estos 3 valores.</p>
+      <p class="note" style="margin-top:6px;">Siguiendo el método visto en clase (Hugo Martínez, estimación subjetiva de demanda), los 3 puntos se ajustan con una parábola <b>exacta</b> Q(P) = a&middot;P&sup2; + b&middot;P + c (no una recta): con exactamente 3 puntos el ajuste siempre es perfecto (R&sup2;=1 por construcción), igual que al resolverlo con 2 puntos auxiliares en Excel.</p>
+      <div class="table-wrap" style="margin-top:10px;">
+        <table>
+          <thead><tr><th>Escenario</th><th>Precio (COP)</th><th>Pedidos/mes esperados</th></tr></thead>
+          <tbody>
+            <tr><td>Promocional</td><td><input type="number" id="sp1" value="90000" step="1000"></td><td><input type="number" id="sq1" value="5.3" step="0.1"></td></tr>
+            <tr><td>Línea base (Mapa de Marca)</td><td><input type="number" id="sp2" value="120000" step="1000"></td><td><input type="number" id="sq2" value="1.8" step="0.1"></td></tr>
+            <tr><td>Premium</td><td><input type="number" id="sp3" value="160000" step="1000"></td><td><input type="number" id="sq3" value="0.4" step="0.1"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="chart-wrap" style="margin-top:12px;"><canvas id="chartDemandSubj"></canvas></div>
+      <div class="grid-3" style="margin-top:12px;">
+        <div class="stat"><div class="label">Coeficiente a (P&sup2;)</div><div class="value" id="statSlopeSubj">&mdash;</div></div>
+        <div class="stat"><div class="label">Coeficiente b (P)</div><div class="value" id="statInterceptSubj">&mdash;</div></div>
+        <div class="stat"><div class="label">Coeficiente c</div><div class="value" id="statR2Subj">&mdash;</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <b style="font-size:13px;">7.3 &middot; Utilidad: Profit = (Precio &minus; Costo unitario) &times; Cantidad &minus; Costos fijos</b>
+      <div class="formula" style="margin-top:8px;">Profit(P) = (P &minus; c) &middot; Q(P) &minus; CF &nbsp;&nbsp;donde&nbsp;&nbsp; Q(P) = a&middot;P&sup2; + b&middot;P + c</div>
+      <p class="note" style="margin-top:8px;">El precio óptimo se busca <b>solo dentro del rango de precios evaluado en la encuesta</b> (entre el escenario Promocional y el Premium), igual que la restricción de caja que se le pone a Excel Solver en clase &mdash; evita recomendar un precio fuera de lo que el mercado objetivo realmente valoró.</p>
+      <div class="grid-2" style="margin-top:12px;">
+        <div class="field"><label for="costSubj">Costo unitario de producción (COP/proyecto)</label><input type="number" id="costSubj" value="48000" step="1000"></div>
+        <div class="field"><label for="fixedSubj">Costos fijos mensuales (COP)</label><input type="number" id="fixedSubj" value="300000" step="10000"></div>
+      </div>
+      <div class="chart-wrap" style="margin-top:12px;"><canvas id="chartProfitSubj"></canvas></div>
+      <div class="grid-3" style="margin-top:12px;">
+        <div class="stat"><div class="label">Precio óptimo (P*)</div><div class="value" id="statPstar">&mdash;</div></div>
+        <div class="stat"><div class="label">Pedidos/mes a P*</div><div class="value" id="statQstar">&mdash;</div></div>
+        <div class="stat"><div class="label">Utilidad máxima/mes</div><div class="value" id="statProfitStar">&mdash;</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 8 ================= -->
+  <section class="step" id="s8" data-title="8 · Simulación">
+    <div class="step-head">
+      <div class="step-num">8</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 5 &middot; Evaluación</p>
+        <h2>Escenarios de simulación óptimos</h2>
+        <p>Ajusta costo, costos fijos y una variación de demanda para ver cómo se mueve el precio óptimo.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="btnrow">
+        <button id="scBase" class="primary">Base</button>
+        <button id="scHigh">Demanda alta (+20%)</button>
+        <button id="scLow">Demanda baja (&minus;20%)</button>
+      </div>
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="field">
+          <label for="demandShift">Variación de demanda (desplaza el intercepto a) &mdash; <span id="demandShiftLabel" class="mono">0%</span></label>
+          <input type="range" id="demandShift" min="-40" max="40" value="0" step="5">
+        </div>
+        <div class="field">
+          <label for="costShift">Costo unitario del escenario (COP/proyecto)</label>
+          <input type="number" id="costShift" value="48000" step="1000">
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:14px;">
+        <table id="scenarioTable">
+          <thead><tr><th>Escenario</th><th>Precio óptimo</th><th>Pedidos/mes</th><th>Ingreso/mes</th><th>Utilidad/mes</th><th>Margen</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 9 ================= -->
+  <section class="step" id="s9" data-title="9 · Políticas">
+    <div class="step-head">
+      <div class="step-num">9</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
+        <h2>Políticas de precio</h2>
+        <p>Lanzamiento, entrada de competencia y productos complementarios &mdash; con los números del paso 8.</p>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card policy-card">
+        <div class="kicker">Lanzamiento</div>
+        <h3>Penetración, no descreme</h3>
+        <p id="policyLaunch">&mdash;</p>
+      </div>
+      <div class="card policy-card">
+        <div class="kicker">Entrada de competencia</div>
+        <h3>Defender margen, no precio</h3>
+        <p id="policyCompetition">&mdash;</p>
+        <div class="field" style="margin-top:10px;">
+          <label for="compShift">Si un competidor entra y la demanda cae &mdash; <span id="compShiftLabel" class="mono">&minus;15%</span></label>
+          <input type="range" id="compShift" min="0" max="40" value="15" step="5">
+        </div>
+      </div>
+      <div class="card policy-card">
+        <div class="kicker">Productos complementarios</div>
+        <h3>Empaquetar, no descontar</h3>
+        <p id="policyComplements">&mdash;</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Honestidad metodológica:</b> esta app ya trabaja sobre el caso propio de Tu Idea en 3D, siguiendo las fases de CRISP-DM documentadas en el trabajo (ver etiqueta de fase en cada paso). Las secciones 1 a 6 y 7.1 usan la bitácora de leads descrita en el documento CRISP-DM (sección 2.2), <b>simulada</b> &mdash;36 filas, 6 categorías &times; 6 meses&mdash; porque el negocio todavía no acumula los 150&ndash;200 registros reales que ese mismo documento proyecta (sección 1.7.1); está calibrada contra las cifras reales ya conocidas (ticket promedio $120.000 COP, meta 8 proyectos/mes). Las secciones 7.2 a 9 usan además una curva de demanda subjetiva (3 puntos de juicio del negocio, ajuste cuadrático exacto, método de clase de Hugo Martínez). En cuanto exista la bitácora real, se reemplaza el archivo simulado por el propio en el paso 2 y se actualizan los 3 puntos de la sección 7.2 &mdash; el resto de la app (regresión, utilidad, escenarios, políticas) se recalcula solo, sin tocar código.</p>
+    <p>Para usarla en Google AI Studio: puedes pegar este archivo HTML tal cual en una app de tipo "web app" en Build, o usarlo directamente aquí &mdash; no necesita backend, todo el cálculo corre en el navegador.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============== THEME-AWARE CHART COLORS ============== */
+  function currentTheme(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark' || t === 'light') return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  var PAL = {
+    light:{ text:'#0b0b0b', text2:'#52514e', muted:'#898781', grid:'#e1e0d9', surface:'#fcfcfb',
+            blue:'#2a78d6', aqua:'#1baf7a', violet:'#6250d6', red:'#e34948', magenta:'#e87ba4', green:'#008300', accent:'#c2410c' },
+    dark:{ text:'#f0efec', text2:'#c3c2b7', muted:'#938f86', grid:'#2c2c2a', surface:'#1a1a19',
+           blue:'#3987e5', aqua:'#2bc98f', violet:'#9085e9', red:'#e66767', magenta:'#d55181', green:'#008300', accent:'#f87800' }
+  };
+  function pal(){ return PAL[currentTheme()]; }
+
+  var charts = {};
+  function registerChart(id, cfg){
+    if (charts[id]) charts[id].destroy();
+    var ctx = document.getElementById(id).getContext('2d');
+    charts[id] = new Chart(ctx, cfg);
+    return charts[id];
+  }
+  function baseGridOptions(){
+    var p = pal();
+    return {
+      color: p.text2,
+      font: { family: "'IBM Plex Mono', monospace", size: 11 },
+      grid: { color: p.grid, drawTicks:false },
+      border: { color: p.grid }
+    };
+  }
+  function baseLegend(){
+    var p = pal();
+    return { labels: { color: p.text2, font:{ family:"'IBM Plex Sans', sans-serif", size:12 }, usePointStyle:true, boxWidth:8, boxHeight:8 } };
+  }
+  function baseTooltip(){
+    var p = pal();
+    return { backgroundColor: p.surface, titleColor: p.text, bodyColor: p.text2, borderColor: p.grid, borderWidth:1, padding:10, titleFont:{family:"'IBM Plex Mono', monospace", size:11}, bodyFont:{family:"'IBM Plex Mono', monospace", size:11} };
+  }
+
+  /* ============== STATS HELPERS ============== */
+  function mean(a){ return a.reduce(function(x,y){return x+y;},0)/a.length; }
+  function linreg(xs, ys){
+    var n = xs.length, mx = mean(xs), my = mean(ys);
+    var sxy=0, sxx=0, syy=0;
+    for (var i=0;i<n;i++){ var dx=xs[i]-mx, dy=ys[i]-my; sxy+=dx*dy; sxx+=dx*dx; syy+=dy*dy; }
+    var slope = sxy/sxx, intercept = my - slope*mx;
+    var r2 = (sxy*sxy) / (sxx*syy);
+    return { slope: slope, intercept: intercept, r2: r2 };
+  }
+  // Profit(P) = (P-cost)*(a+b*P) - fixed  =>  P* = (cost*b - a)/(2b)
+  function optimalPrice(a, b, cost, fixed){
+    fixed = fixed || 0;
+    var pStar = (cost*b - a) / (2*b);
+    var qStar = Math.max(a + b*pStar, 0);
+    var profitStar = (pStar - cost) * qStar - fixed;
+    return { pStar: pStar, qStar: qStar, profitStar: profitStar };
+  }
+  // Curva de demanda subjetiva estimada por juicio (método de clase, Hugo Martínez):
+  // ajuste EXACTO de una parábola Q(P) = a*P^2 + b*P + c por 3 puntos de precio/cantidad
+  // (equivalente a lo que Excel hace con 2 puntos auxiliares + Solver, resuelto aquí en forma cerrada).
+  function quadFit3(xs, ys){
+    var x1=xs[0], x2=xs[1], x3=xs[2], y1=ys[0], y2=ys[1], y3=ys[2];
+    var d1=(x1-x2)*(x1-x3), d2=(x2-x1)*(x2-x3), d3=(x3-x1)*(x3-x2);
+    var a = y1/d1 + y2/d2 + y3/d3;
+    var b = -y1*(x2+x3)/d1 - y2*(x1+x3)/d2 - y3*(x1+x2)/d3;
+    var c = y1*(x2*x3)/d1 + y2*(x1*x3)/d2 + y3*(x1*x2)/d3;
+    return { a:a, b:b, c:c, r2:1 };
+  }
+  // Profit(P) = (P-cost)*(a*P^2+b*P+c) - fixed. d/dP es una cuadrática en P (3a·P² + 2(b-costo·a)·P + (c-costo·b) = 0);
+  // se evalúan sus raíces y los límites [lo,hi] (restricción de rango, como la caja de Solver) y se toma el máximo.
+  function optimalPriceQuad(a, b, c, cost, fixed, lo, hi){
+    fixed = fixed || 0;
+    var A = 3*a, B = 2*(b - cost*a), C = (c - cost*b);
+    var cands = [];
+    if (Math.abs(A) < 1e-12){ if (Math.abs(B) > 1e-12) cands.push(-C/B); }
+    else {
+      var disc = B*B - 4*A*C;
+      if (disc >= 0){ var sq = Math.sqrt(disc); cands.push((-B+sq)/(2*A)); cands.push((-B-sq)/(2*A)); }
+    }
+    cands.push(lo, hi);
+    var best = null;
+    for (var i=0;i<cands.length;i++){
+      var P = cands[i];
+      if (!isFinite(P) || P < lo || P > hi) continue;
+      var Q = Math.max(a*P*P + b*P + c, 0);
+      var profit = (P-cost)*Q - fixed;
+      if (!best || profit > best.profitStar) best = { pStar:P, qStar:Q, profitStar:profit };
+    }
+    return best || { pStar:lo, qStar:0, profitStar:-fixed };
+  }
+  function fmtMoneyCOP(v){ return '$' + Math.round(v).toLocaleString('es-CO'); }
+  function fmtUSD(v){ return 'US$' + v.toFixed(2); }
+  function fmtNum(v, d){ return Number(v).toLocaleString('es-CO', {maximumFractionDigits: d==null?0:d}); }
+
+  /* ============== EMBEDDED SAMPLE DATASET (bitácora de leads simulada, Tu Idea en 3D) ============== */
+  var EMBEDDED = [{"Fecha":"2026-04-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":2,"Consultas_recibidas":7,"categoria":"Jabones","Año":2026,"canal":"TikTok"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":81000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Velas","Año":2026,"canal":"Instagram"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":102000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","Año":2026,"canal":"Instagram"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":113000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Repostería","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":163000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Decoración","Año":2026,"canal":"Instagram"},{"Fecha":"2026-04-01","Precio_cotizado_promedio":249000,"Pedidos_convertidos":0,"Consultas_recibidas":1,"categoria":"Piezas especiales","Año":2026,"canal":"TikTok"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":3,"Consultas_recibidas":8,"categoria":"Jabones","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":80000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Velas","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":100000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","Año":2026,"canal":"Instagram"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":139000,"Pedidos_convertidos":1,"Consultas_recibidas":5,"categoria":"Repostería","Año":2026,"canal":"Instagram"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":197000,"Pedidos_convertidos":0,"Consultas_recibidas":1,"categoria":"Decoración","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-05-01","Precio_cotizado_promedio":232000,"Pedidos_convertidos":0,"Consultas_recibidas":2,"categoria":"Piezas especiales","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":57000,"Pedidos_convertidos":3,"Consultas_recibidas":6,"categoria":"Jabones","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":73000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Velas","Año":2026,"canal":"Instagram"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":90000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","Año":2026,"canal":"TikTok"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":124000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Repostería","Año":2026,"canal":"Instagram"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":173000,"Pedidos_convertidos":1,"Consultas_recibidas":3,"categoria":"Decoración","Año":2026,"canal":"Instagram"},{"Fecha":"2026-06-01","Precio_cotizado_promedio":256000,"Pedidos_convertidos":0,"Consultas_recibidas":3,"categoria":"Piezas especiales","Año":2026,"canal":"Tienda Shopify"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":3,"Consultas_recibidas":7,"categoria":"Jabones","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":78000,"Pedidos_convertidos":3,"Consultas_recibidas":7,"categoria":"Velas","Año":2026,"canal":"Instagram"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":95000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","Año":2026,"canal":"Instagram"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":129000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Repostería","Año":2026,"canal":"Instagram"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":178000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Decoración","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-07-01","Precio_cotizado_promedio":259000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Piezas especiales","Año":2026,"canal":"Instagram"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":62000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Jabones","Año":2026,"canal":"Instagram"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":77000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Velas","Año":2026,"canal":"Instagram"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":92000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","Año":2026,"canal":"TikTok"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":124000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Repostería","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":168000,"Pedidos_convertidos":0,"Consultas_recibidas":1,"categoria":"Decoración","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-08-01","Precio_cotizado_promedio":242000,"Pedidos_convertidos":1,"Consultas_recibidas":3,"categoria":"Piezas especiales","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":57000,"Pedidos_convertidos":2,"Consultas_recibidas":5,"categoria":"Jabones","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":89000,"Pedidos_convertidos":2,"Consultas_recibidas":7,"categoria":"Velas","Año":2026,"canal":"Instagram"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":83000,"Pedidos_convertidos":2,"Consultas_recibidas":6,"categoria":"Mascotas y regalos","Año":2026,"canal":"Instagram"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":139000,"Pedidos_convertidos":1,"Consultas_recibidas":4,"categoria":"Repostería","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":188000,"Pedidos_convertidos":0,"Consultas_recibidas":2,"categoria":"Decoración","Año":2026,"canal":"WhatsApp Business"},{"Fecha":"2026-09-01","Precio_cotizado_promedio":266000,"Pedidos_convertidos":0,"Consultas_recibidas":2,"categoria":"Piezas especiales","Año":2026,"canal":"Instagram"}];
+
+  /* ============== APP STATE ============== */
+  var state = {
+    originalRows: EMBEDDED.slice(),
+    rows: EMBEDDED.slice(),
+    priceCol: 'Precio_cotizado_promedio',
+    qtyCol: 'Pedidos_convertidos',
+    columns: ['Fecha','Precio_cotizado_promedio','Pedidos_convertidos','Consultas_recibidas','categoria','Año','canal']
+  };
+
+  /* ============== VARIABLE TYPE DETECTION ============== */
+  function looksLikeDate(v){ return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v); }
+  function detectColumnType(rows, col){
+    var vals = rows.map(function(r){ return r[col]; }).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+    if (!vals.length) return { tipo:'Cualitativa', sub:'nominal (vacía)' };
+    if (vals.every(looksLikeDate)) return { tipo:'Fecha', sub:'temporal' };
+    var numeric = vals.every(function(v){ return typeof v === 'number' && !isNaN(v); });
+    if (numeric){
+      var allInt = vals.every(function(v){ return Number.isInteger(v); });
+      var distinct = new Set(vals).size;
+      if (allInt && distinct <= 20) return { tipo:'Cuantitativa', sub:'discreta' };
+      return { tipo:'Cuantitativa', sub: allInt ? 'discreta' : 'continua' };
+    }
+    var distinctStr = new Set(vals).size;
+    return { tipo:'Cualitativa', sub: distinctStr <= 15 ? 'nominal' : 'nominal (alta cardinalidad)' };
+  }
+  function detectAllTypes(rows, cols){
+    var out = {};
+    cols.forEach(function(c){ out[c] = detectColumnType(rows, c); });
+    return out;
+  }
+
+  /* ============== MISSING DATA ============== */
+  function missingSummary(rows, cols){
+    var n = rows.length;
+    return cols.map(function(c){
+      var missing = rows.filter(function(r){ var v=r[c]; return v===null||v===undefined||v===''||(typeof v==='number'&&isNaN(v)); }).length;
+      return { col:c, missing:missing, pct: n ? (100*missing/n) : 0 };
+    });
+  }
+  function median(nums){
+    var s = nums.slice().sort(function(a,b){return a-b;});
+    var m = s.length;
+    if (!m) return 0;
+    return m%2 ? s[(m-1)/2] : (s[m/2-1]+s[m/2])/2;
+  }
+  function mode(vals){
+    var counts = {};
+    vals.forEach(function(v){ counts[v] = (counts[v]||0)+1; });
+    var best=null, bestC=-1;
+    Object.keys(counts).forEach(function(k){ if (counts[k]>bestC){ bestC=counts[k]; best=k; } });
+    return best;
+  }
+  function cleanDrop(rows, cols){
+    return rows.filter(function(r){ return cols.every(function(c){ var v=r[c]; return !(v===null||v===undefined||v===''||(typeof v==='number'&&isNaN(v))); }); });
+  }
+  function cleanImpute(rows, cols, types){
+    var fillVals = {};
+    cols.forEach(function(c){
+      var present = rows.map(function(r){return r[c];}).filter(function(v){ return !(v===null||v===undefined||v===''||(typeof v==='number'&&isNaN(v))); });
+      if (!present.length) { fillVals[c]=null; return; }
+      if (types[c] && types[c].tipo==='Cuantitativa') fillVals[c] = median(present);
+      else fillVals[c] = mode(present);
+    });
+    return rows.map(function(r){
+      var copy = Object.assign({}, r);
+      cols.forEach(function(c){
+        var v = copy[c];
+        if (v===null||v===undefined||v===''||(typeof v==='number'&&isNaN(v))) copy[c]=fillVals[c];
+      });
+      return copy;
+    });
+  }
+
+  /* ============== RENDER: HEAD TABLE ============== */
+  function renderHead(){
+    var cols = state.columns;
+    var rows = state.rows.slice(0,5);
+    var html = '<thead><tr>' + cols.map(function(c){return '<th>'+c+'</th>';}).join('') + '</tr></thead><tbody>';
+    rows.forEach(function(r){
+      html += '<tr>' + cols.map(function(c){
+        var v = r[c];
+        if (typeof v === 'number') v = fmtNum(v, 2);
+        return '<td>'+ (v===undefined||v===null||v===''?'<span style=\"color:var(--muted)\">&mdash;</span>':v) +'</td>';
+      }).join('') + '</tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('headTable').innerHTML = html;
+    document.getElementById('shapeNote').innerHTML = '<b>'+state.rows.length+'</b> filas &times; <b>'+cols.length+'</b> columnas.';
+    document.getElementById('rowCountNote').textContent = state.rows.length + ' filas cargadas';
+  }
+
+  /* ============== RENDER: TYPES TABLE ============== */
+  function renderTypes(){
+    var cols = state.columns;
+    var types = detectAllTypes(state.rows, cols);
+    var sample = state.rows[0] || {};
+    var html = '<thead><tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th></tr></thead><tbody>';
+    cols.forEach(function(c){
+      var t = types[c];
+      var cls = t.tipo==='Cuantitativa' ? 'num' : (t.tipo==='Fecha' ? 'date' : 'cat');
+      var ex = sample[c];
+      if (typeof ex === 'number') ex = fmtNum(ex,2);
+      html += '<tr><td class="mono">'+c+'</td><td><span class="tag '+cls+'">'+t.tipo+' &middot; '+t.sub+'</span></td><td class="mono">'+(ex===undefined?'&mdash;':ex)+'</td></tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('typesTable').innerHTML = html;
+    state._types = types;
+  }
+
+  /* ============== RENDER: MISSING TABLE ============== */
+  function renderMissing(){
+    var cols = state.columns;
+    var sum = missingSummary(state.rows, cols);
+    var totalMissing = sum.reduce(function(a,s){return a+s.missing;},0);
+    var html = '<thead><tr><th>Columna</th><th>Faltantes</th><th>% faltante</th></tr></thead><tbody>';
+    sum.forEach(function(s){
+      html += '<tr><td class="mono">'+s.col+'</td><td>'+s.missing+'</td><td>'+s.pct.toFixed(1)+'%</td></tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('missingTable').innerHTML = html;
+    document.getElementById('cleanStatus').innerHTML = totalMissing===0
+      ? 'Este dataset no tiene valores faltantes (' + state.rows.length + ' filas completas). Si subes tu propio archivo con huecos, los botones de arriba quedan activos para limpiarlos.'
+      : '<b>'+totalMissing+'</b> valores faltantes detectados en total. Usa los botones para eliminarlos o imputarlos.';
+  }
+
+  /* ============== EDA CHARTS ============== */
+  function groupByTypeYear(rows){
+    var byType = {};
+    rows.forEach(function(r){
+      var t = r.categoria || 'dato';
+      if (!byType[t]) byType[t] = [];
+      byType[t].push(r);
+    });
+    return byType;
+  }
+  function renderEDA(){
+    var rows = state.rows;
+    var p = pal();
+    var byType = groupByTypeYear(rows);
+    var types = Object.keys(byType);
+
+    // Chart: average price by type (bar)
+    var avgByType = types.map(function(t){ return mean(byType[t].map(function(r){return r[state.priceCol];}).filter(function(v){return typeof v==='number';})); });
+    registerChart('chartPriceByType', {
+      type:'bar',
+      data:{ labels: types, datasets:[{ label:'Precio cotizado promedio', data: avgByType, backgroundColor:[p.blue,p.aqua,p.violet,p.red,p.magenta,p.green], borderRadius:4, maxBarThickness:60 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip: baseTooltip() },
+        scales:{ x:{ ticks: baseGridOptions(), grid:{display:false}, border: baseGridOptions().border },
+                 y:{ ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border, beginAtZero:true } } }
+    });
+
+    // Chart: scatter price vs qty (raw)
+    var scatterData = types.map(function(t, i){
+      var color = [p.blue,p.aqua,p.violet,p.red,p.magenta,p.green][i % 6];
+      return {
+        label: t,
+        data: byType[t].map(function(r){ return { x:r[state.priceCol], y:r[state.qtyCol] }; }),
+        backgroundColor: color, pointRadius:3, pointHoverRadius:5
+      };
+    });
+    registerChart('chartScatterRaw', {
+      type:'scatter',
+      data:{ datasets: scatterData },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend: baseLegend(), tooltip: Object.assign(baseTooltip(), { callbacks:{ label:function(ctx){ return ctx.dataset.label+': precio '+fmtMoneyCOP(ctx.parsed.x)+', '+ctx.parsed.y.toFixed(0)+' pedidos'; } } }) },
+        scales:{ x:{ title:{display:true, text:'Precio cotizado (COP)', color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border },
+                 y:{ title:{display:true, text:'Pedidos convertidos/mes', color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border } } }
+    });
+
+    // Chart: trend by month
+    var months = Array.from(new Set(rows.map(function(r){return (r.Fecha||'').slice(0,7);}))).sort();
+    var trendData = types.map(function(t,i){
+      var color = [p.blue,p.aqua,p.violet,p.red,p.magenta,p.green][i%6];
+      return {
+        label:t, borderColor:color, backgroundColor:color, pointRadius:3, tension:.25,
+        data: months.map(function(m){
+          var sub = byType[t].filter(function(r){return (r.Fecha||'').slice(0,7)===m;}).map(function(r){return r[state.priceCol];});
+          return sub.length ? mean(sub) : null;
+        })
+      };
+    });
+    registerChart('chartTrend', {
+      type:'line',
+      data:{ labels: months, datasets: trendData },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+        plugins:{ legend: baseLegend(), tooltip: baseTooltip() },
+        scales:{ x:{ ticks: baseGridOptions(), grid:{display:false}, border: baseGridOptions().border },
+                 y:{ ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border, title:{display:true,text:'Precio cotizado promedio',color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}} } } }
+    });
+  }
+
+  /* ============== DEMAND CURVE (real data) ============== */
+  function renderDemandReal(){
+    var rows = state.rows.filter(function(r){ return typeof r[state.priceCol]==='number' && typeof r[state.qtyCol]==='number'; });
+    var xs = rows.map(function(r){ return r[state.priceCol]; });
+    var ys = rows.map(function(r){ return r[state.qtyCol]; });
+    if (xs.length < 3){ return; }
+    var fit = linreg(xs, ys);
+    var p = pal();
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var line = [ {x:minX, y:fit.intercept+fit.slope*minX}, {x:maxX, y:fit.intercept+fit.slope*maxX} ];
+
+    registerChart('chartDemandReal', {
+      type:'scatter',
+      data:{ datasets:[
+        { label:'Observaciones', data: rows.map(function(r,i){return {x:xs[i], y:ys[i]};}), backgroundColor: p.blue+'99', pointRadius:3 },
+        { type:'line', label:'Ajuste lineal', data: line, borderColor: p.red, borderWidth:2, pointRadius:0, tension:0 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend: baseLegend(), tooltip: baseTooltip() },
+        scales:{ x:{ title:{display:true, text:'Precio cotizado (COP)', color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border },
+                 y:{ title:{display:true, text:'Pedidos convertidos/mes', color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border } } }
+    });
+
+    document.getElementById('statSlope').textContent = fit.slope.toFixed(5);
+    document.getElementById('statIntercept').textContent = fit.intercept.toFixed(2);
+    document.getElementById('statR2').textContent = fit.r2.toFixed(3);
+    var meanX = mean(xs), meanY = mean(ys);
+    var elasticity = fit.slope * meanX / meanY;
+    document.getElementById('statElasticity').textContent = elasticity.toFixed(2);
+    document.getElementById('elasticityNote').textContent = Math.abs(elasticity) < 1
+      ? 'demanda inelástica: ante un alza de precio, los pedidos caen menos que proporcionalmente'
+      : 'demanda elástica: ante un alza de precio, los pedidos caen más que proporcionalmente — coherente con que son compras de personalización y regalo, no de primera necesidad, y el cliente puede posponerlas o buscar algo más económico';
+    state._realFit = fit;
+  }
+
+  /* ============== SUBJECTIVE DEMAND CURVE (Tu Idea en 3D) ============== */
+  function getSubjPoints(){
+    return {
+      P: [ Number(document.getElementById('sp1').value), Number(document.getElementById('sp2').value), Number(document.getElementById('sp3').value) ],
+      Q: [ Number(document.getElementById('sq1').value), Number(document.getElementById('sq2').value), Number(document.getElementById('sq3').value) ]
+    };
+  }
+  function renderSubjective(){
+    var pts = getSubjPoints();
+    var fit = quadFit3(pts.P, pts.Q);
+    var p = pal();
+    var minX = Math.min.apply(null, pts.P)*0.85, maxX = Math.max.apply(null, pts.P)*1.15;
+    var nCurve = 30, line = [];
+    for (var ci=0; ci<=nCurve; ci++){
+      var cx = minX + (maxX-minX)*ci/nCurve;
+      line.push({ x:cx, y: Math.max(fit.a*cx*cx + fit.b*cx + fit.c, 0) });
+    }
+
+    registerChart('chartDemandSubj', {
+      type:'scatter',
+      data:{ datasets:[
+        { label:'Puntos de juicio del negocio', data: pts.P.map(function(x,i){return {x:x, y:pts.Q[i]};}), backgroundColor:p.violet, pointRadius:6, pointHoverRadius:8 },
+        { type:'line', label:'Curva subjetiva (cuadrática)', data: line, borderColor:p.aqua, borderWidth:2, pointRadius:0, tension:.25 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend: baseLegend(), tooltip: baseTooltip() },
+        scales:{ x:{ title:{display:true,text:'Precio (COP)',color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border },
+                 y:{ title:{display:true,text:'Pedidos/mes',color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border } } }
+    });
+
+    document.getElementById('statSlopeSubj').textContent = fit.a.toExponential(2);
+    document.getElementById('statInterceptSubj').textContent = fit.b.toFixed(4);
+    document.getElementById('statR2Subj').textContent = fmtNum(fit.c,2);
+    state._subjFit = fit;
+    state._subjLo = Math.min.apply(null, pts.P);
+    state._subjHi = Math.max.apply(null, pts.P);
+    return fit;
+  }
+
+  /* ============== PROFIT CURVE (Tu Idea en 3D) ============== */
+  function renderProfitSubj(){
+    var fit = state._subjFit || renderSubjective();
+    var cost = Number(document.getElementById('costSubj').value);
+    var fixed = Number(document.getElementById('fixedSubj').value);
+    var lo = state._subjLo, hi = state._subjHi;
+    var opt = optimalPriceQuad(fit.a, fit.b, fit.c, cost, fixed, lo, hi);
+    var p = pal();
+
+    var loPlot = lo*0.85, hiPlot = hi*1.15;
+    var n = 40, curve = [];
+    for (var i=0;i<=n;i++){
+      var P = loPlot + (hiPlot-loPlot)*i/n;
+      var Q = Math.max(fit.a*P*P + fit.b*P + fit.c, 0);
+      curve.push({ x:P, y:(P-cost)*Q - fixed });
+    }
+    registerChart('chartProfitSubj', {
+      type:'line',
+      data:{ datasets:[
+        { label:'Utilidad mensual', data: curve, borderColor:p.blue, backgroundColor:p.blue+'22', fill:true, pointRadius:0, tension:.3, borderWidth:2 },
+        { label:'Óptimo', data:[{x:opt.pStar, y:opt.profitStar}], type:'scatter', backgroundColor:p.red, pointRadius:6, pointHoverRadius:8 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend: baseLegend(), tooltip: baseTooltip() },
+        scales:{ x:{ title:{display:true,text:'Precio (COP)',color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border },
+                 y:{ title:{display:true,text:'Utilidad (COP/mes)',color:p.text2, font:{family:"'IBM Plex Mono', monospace", size:11}}, ticks: baseGridOptions(), grid: baseGridOptions().grid, border: baseGridOptions().border } } }
+    });
+
+    document.getElementById('statPstar').textContent = fmtMoneyCOP(opt.pStar);
+    document.getElementById('statQstar').textContent = fmtNum(opt.qStar,1);
+    document.getElementById('statProfitStar').textContent = fmtMoneyCOP(opt.profitStar);
+    state._baseOpt = opt;
+    return opt;
+  }
+
+  /* ============== SCENARIO SIMULATION (paso 8) ============== */
+  function runScenario(shiftPct, cost, fixed, label){
+    var fit = state._subjFit;
+    var c2 = fit.c * (1 + shiftPct/100);
+    var opt = optimalPriceQuad(fit.a, fit.b, c2, cost, fixed, state._subjLo, state._subjHi);
+    var revenue = opt.pStar * opt.qStar;
+    var margin = revenue !== 0 ? (opt.profitStar + fixed) / revenue : 0;
+    return { label:label, pStar:opt.pStar, qStar:opt.qStar, revenue:revenue, profit:opt.profitStar, margin:margin };
+  }
+  function renderScenarios(){
+    var fixed = Number(document.getElementById('fixedSubj').value);
+    var cost = Number(document.getElementById('costShift').value);
+    var shift = Number(document.getElementById('demandShift').value);
+    document.getElementById('demandShiftLabel').textContent = (shift>0?'+':'')+shift+'%';
+
+    var rows = [
+      runScenario(0, cost, fixed, 'Base'),
+      runScenario(shift, cost, fixed, 'Escenario simulado ('+(shift>0?'+':'')+shift+'%)')
+    ];
+    var tbody = document.querySelector('#scenarioTable tbody');
+    tbody.innerHTML = rows.map(function(r){
+      return '<tr><td>'+r.label+'</td><td class="mono">'+fmtMoneyCOP(r.pStar)+'</td><td class="mono">'+fmtNum(r.qStar,1)+'</td><td class="mono">'+fmtMoneyCOP(r.revenue)+'</td><td class="mono">'+fmtMoneyCOP(r.profit)+'</td><td class="mono">'+(r.margin*100).toFixed(0)+'%</td></tr>';
+    }).join('');
+    state._scenario = rows[1];
+    renderPolicies();
+  }
+
+  /* ============== POLICIES (paso 9) ============== */
+  function renderPolicies(){
+    var base = state._baseOpt;
+    if (!base) return;
+    document.getElementById('policyLaunch').innerHTML = 'La utilidad se maximiza cerca de <b>'+fmtMoneyCOP(base.pStar)+'</b>, muy cerca del precio promocional evaluado (COP 90.000) y por debajo de la línea base actual. Para el lanzamiento conviene partir cerca de ese óptimo &mdash; o incluso algo por debajo, aceptando menos margen inicial a cambio de validar la demanda real más rápido y empezar a llenar la bitácora de leads (sección 2 del documento CRISP-DM).';
+
+    var compShift = Number(document.getElementById('compShift').value);
+    var fit = state._subjFit;
+    var cost = Number(document.getElementById('costSubj').value);
+    var fixed = Number(document.getElementById('fixedSubj').value);
+    var c2 = fit.c * (1 - compShift/100);
+    var optComp = optimalPriceQuad(fit.a, fit.b, c2, cost, fixed, state._subjLo, state._subjHi);
+    var deltaP = optComp.pStar - base.pStar;
+    document.getElementById('policyCompetition').innerHTML = 'Si la entrada de un competidor reduce la demanda esperada un '+compShift+'%, el precio que maximiza utilidad se mueve a <b>'+fmtMoneyCOP(optComp.pStar)+'</b> ('+(deltaP>=0?'+':'')+fmtMoneyCOP(deltaP)+' frente al base). La utilidad máxima posible cae a <b>'+fmtMoneyCOP(optComp.profitStar)+'</b>/mes: la respuesta recomendada no es necesariamente bajar precio, sino reforzar diferenciación (personalización, tiempos de entrega) para sostener el intercepto de demanda.';
+
+    document.getElementById('policyComplements').innerHTML = 'Productos de bajo costo marginal (bases, empaques de regalo, piezas pequeñas) funcionan mejor como complemento incluido o en combo que como descuento directo sobre el precio óptimo de <b>'+fmtMoneyCOP(base.pStar)+'</b>: un combo "figura + base" a un precio conjunto ligeramente menor que la suma de precios individuales sube el ticket promedio sin mover el precio ancla del producto principal. Igual que en el caso de maquinillas de afeitar visto en clase (precio ancla + recambios), si se optimiza la <b>utilidad conjunta</b> (pieza + complemento) en vez de cada producto por separado, puede convenir bajar el precio de la pieza principal por debajo de su óptimo individual cuando el margen del complemento compensa esa pérdida &mdash; útil para combos de regalo donde el empaque o la base se vende casi a costo.';
+  }
+
+  /* ============== PILL NAV ============== */
+  function buildNav(){
+    var sections = Array.prototype.slice.call(document.querySelectorAll('section.step'));
+    var nav = document.getElementById('pillnav');
+    sections.forEach(function(s){
+      var b = document.createElement('button');
+      b.className = 'pill';
+      b.textContent = s.getAttribute('data-title');
+      b.addEventListener('click', function(){ s.scrollIntoView({behavior:'smooth', block:'start'}); });
+      b.dataset.target = s.id;
+      nav.appendChild(b);
+    });
+    var pills = Array.prototype.slice.call(nav.querySelectorAll('.pill'));
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){
+          pills.forEach(function(p){ p.classList.toggle('active', p.dataset.target === e.target.id); });
+        }
+      });
+    }, { rootMargin:'-40% 0px -55% 0px' });
+    sections.forEach(function(s){ io.observe(s); });
+  }
+
+  /* ============== FILE IMPORT ============== */
+  function guessColumns(cols){
+    var priceGuess = cols.find(function(c){ return /price|precio/i.test(c); }) || cols[0];
+    var qtyGuess = cols.find(function(c){ return /volum|quantity|cantidad|unidades|qty|sales|pedido|orders|convertid|demanda/i.test(c); }) || cols.filter(function(c){ return c!==priceGuess; })[0] || cols[0];
+    return { price: priceGuess, qty: qtyGuess };
+  }
+  function populateColumnSelects(cols){
+    ['priceColSel','qtyColSel'].forEach(function(id){
+      var sel = document.getElementById(id);
+      sel.innerHTML = cols.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+    });
+    var g = guessColumns(cols);
+    document.getElementById('priceColSel').value = g.price;
+    document.getElementById('qtyColSel').value = g.qty;
+    state.priceCol = g.price; state.qtyCol = g.qty;
+  }
+  function loadDataset(rows, label){
+    if (!rows || !rows.length){ document.getElementById('fileStatus').textContent = 'No se pudo leer ese archivo (vacío o formato no reconocido).'; return; }
+    var cols = Object.keys(rows[0]);
+    state.originalRows = rows;
+    state.rows = rows;
+    state.columns = cols;
+    populateColumnSelects(cols);
+    document.getElementById('fileStatus').innerHTML = 'Cargado: <b>'+label+'</b> &mdash; '+rows.length+' filas, '+cols.length+' columnas.';
+    recomputeAll();
+  }
+  function parseDelimited(text, label){
+    var res = Papa.parse(text, { header:true, dynamicTyping:true, skipEmptyLines:true, delimitersToGuess:[',',';','\t','|'] });
+    loadDataset(res.data, label);
+    return res;
+  }
+  function parseJSON(text, label){
+    var data = JSON.parse(text);
+    if (!Array.isArray(data)){
+      var arrKey = Object.keys(data).find(function(k){ return Array.isArray(data[k]); });
+      data = arrKey ? data[arrKey] : [data];
+    }
+    loadDataset(data, label);
+  }
+  function parseXLSX(arrayBuffer, label){
+    var wb = XLSX.read(arrayBuffer, { type:'array' });
+    var sheet = wb.Sheets[wb.SheetNames[0]];
+    var data = XLSX.utils.sheet_to_json(sheet, { defval:null });
+    loadDataset(data, label);
+  }
+  function rowsLookValid(rows){
+    if (!Array.isArray(rows) || !rows.length) return false;
+    var first = rows[0];
+    return first !== null && typeof first === 'object' && Object.keys(first).length >= 1;
+  }
+  function readAsText(file){
+    return new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onload = function(e){ resolve(e.target.result); };
+      r.onerror = function(){ reject(r.error || new Error('no se pudo leer el archivo')); };
+      r.readAsText(file);
+    });
+  }
+  function readAsArrayBuffer(file){
+    return new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onload = function(e){ resolve(e.target.result); };
+      r.onerror = function(){ reject(r.error || new Error('no se pudo leer el archivo')); };
+      r.readAsArrayBuffer(file);
+    });
+  }
+  // Extensión no reconocida: intenta JSON, luego texto delimitado, luego formato
+  // binario de hoja de cálculo (SheetJS reconoce xlsx/xls/xlsb/ods por contenido).
+  function smartParse(file){
+    return readAsText(file).catch(function(){ return null; }).then(function(txt){
+      if (txt){
+        try { JSON.parse(txt); parseJSON(txt, file.name); return true; } catch(e){ /* no es JSON */ }
+        var res = Papa.parse(txt, { header:true, dynamicTyping:true, skipEmptyLines:true, delimitersToGuess:[',',';','\t','|'] });
+        if (rowsLookValid(res.data) && res.meta && res.meta.fields && res.meta.fields.length >= 1){
+          loadDataset(res.data, file.name);
+          return true;
+        }
+      }
+      return readAsArrayBuffer(file).then(function(buf){
+        var wb = XLSX.read(buf, { type:'array' });
+        var sheet = wb.Sheets[wb.SheetNames[0]];
+        var data = XLSX.utils.sheet_to_json(sheet, { defval:null });
+        if (!rowsLookValid(data)) throw new Error('el archivo no parece contener una tabla de datos');
+        loadDataset(data, file.name);
+        return true;
+      });
+    });
+  }
+  function handleFile(file){
+    var name = file.name.toLowerCase();
+    var ext = name.lastIndexOf('.') !== -1 ? name.slice(name.lastIndexOf('.')+1) : '';
+    document.getElementById('fileStatus').innerHTML = 'Leyendo <b>'+file.name+'</b>&hellip;';
+    var task;
+    if (['xlsx','xls','xlsm','xlsb','ods'].indexOf(ext) !== -1){
+      task = readAsArrayBuffer(file).then(function(buf){ parseXLSX(buf, file.name); });
+    } else if (ext === 'json'){
+      task = readAsText(file).then(function(txt){ parseJSON(txt, file.name); });
+    } else if (['csv','tsv','txt','dat'].indexOf(ext) !== -1){
+      task = readAsText(file).then(function(txt){ parseDelimited(txt, file.name); });
+    } else {
+      task = smartParse(file);
+    }
+    task.catch(function(err){
+      document.getElementById('fileStatus').innerHTML = 'No se pudo leer <b>'+file.name+'</b> ('+err.message+'). Prueba exportándolo como CSV, JSON o Excel.';
+    });
+  }
+
+  /* ============== RECOMPUTE PIPELINE ============== */
+  function recomputeAll(){
+    renderHead();
+    renderTypes();
+    renderMissing();
+    renderEDA();
+    renderDemandReal();
+    renderSubjective();
+    renderProfitSubj();
+    renderScenarios();
+  }
+
+  /* ============== WIRE UP EVENTS ============== */
+  document.getElementById('fileInput').addEventListener('change', function(e){
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  var dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor = 'var(--accent)'; });
+  dz.addEventListener('dragleave', function(){ dz.style.borderColor = ''; });
+  dz.addEventListener('drop', function(e){
+    e.preventDefault(); dz.style.borderColor = '';
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  document.getElementById('priceColSel').addEventListener('change', function(){ state.priceCol = this.value; renderEDA(); renderDemandReal(); });
+  document.getElementById('qtyColSel').addEventListener('change', function(){ state.qtyCol = this.value; renderEDA(); renderDemandReal(); });
+
+  document.getElementById('btnCleanDrop').addEventListener('click', function(){
+    state.rows = cleanDrop(state.rows, state.columns);
+    document.getElementById('cleanStatus').innerHTML = 'Filas tras eliminar faltantes: <b>'+state.rows.length+'</b> (de '+state.originalRows.length+').';
+    recomputeAll();
+  });
+  document.getElementById('btnCleanImpute').addEventListener('click', function(){
+    var types = state._types || detectAllTypes(state.rows, state.columns);
+    state.rows = cleanImpute(state.rows, state.columns, types);
+    document.getElementById('cleanStatus').innerHTML = 'Valores faltantes imputados con mediana (numéricas) o moda (categóricas) sobre '+state.rows.length+' filas.';
+    recomputeAll();
+  });
+  document.getElementById('btnCleanReset').addEventListener('click', function(){
+    state.rows = state.originalRows.slice();
+    document.getElementById('cleanStatus').innerHTML = 'Datos restaurados ('+state.rows.length+' filas).';
+    recomputeAll();
+  });
+
+  ['sp1','sq1','sp2','sq2','sp3','sq3'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){ renderSubjective(); renderProfitSubj(); renderScenarios(); });
+  });
+  ['costSubj','fixedSubj'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){ renderProfitSubj(); renderScenarios(); });
+  });
+  document.getElementById('scBase').addEventListener('click', function(){ document.getElementById('demandShift').value = 0; renderScenarios(); setActiveScBtn('scBase'); });
+  document.getElementById('scHigh').addEventListener('click', function(){ document.getElementById('demandShift').value = 20; renderScenarios(); setActiveScBtn('scHigh'); });
+  document.getElementById('scLow').addEventListener('click', function(){ document.getElementById('demandShift').value = -20; renderScenarios(); setActiveScBtn('scLow'); });
+  function setActiveScBtn(id){
+    ['scBase','scHigh','scLow'].forEach(function(b){ document.getElementById(b).classList.toggle('primary', b===id); });
+  }
+  document.getElementById('demandShift').addEventListener('input', function(){ renderScenarios(); setActiveScBtn(null); });
+  document.getElementById('costShift').addEventListener('input', renderScenarios);
+  document.getElementById('compShift').addEventListener('input', function(){
+    document.getElementById('compShiftLabel').textContent = '−'+this.value+'%';
+    renderPolicies();
+  });
+
+  /* ============== THEME CHANGE => REDRAW CHARTS ============== */
+  function onThemeChange(){ recomputeAll(); }
+  if (window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onThemeChange);
+  }
+  new MutationObserver(onThemeChange).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+
+  /* ============== INIT ============== */
+  buildNav();
+  populateColumnSelects(state.columns);
+  recomputeAll();
+})();
+</script>
+
+</body></html>
