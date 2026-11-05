@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio de Regresión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== Design plan =====
+   Layout: worksheet igual al resto de Laboratorios (topbar + pillnav + hero +
+   secciones numeradas por fase CRISP-DM).
+   Color: --bg/--surface/--ink neutrales fríos + acento índigo (modelo) y
+          ámbar (simulador/escenario) para separar "lo que el modelo estima"
+          de "lo que tú simulas".
+   Type: Newsreader (display, con cursiva para énfasis) / IBM Plex Sans (body)
+         / IBM Plex Mono (números y fórmulas).
+*/
+:root{
+  --bg:#f7f7fb; --surface:#ffffff; --surface-2:#eef0f8; --raised:#ffffff;
+  --ink:#171a2b; --ink-2:#565b78; --muted:#8a8fab;
+  --border:rgba(23,26,43,0.11); --grid:#e3e4f0;
+  --accent:#4338ca; --accent-strong:#312196; --accent-soft:#e7e5fb; --accent-contrast:#fbfaff;
+  --amber:#b45309; --amber-strong:#92400e; --amber-soft:#fdecd3; --amber-contrast:#fffaf2;
+  --good:#1a7a42; --warn:#b5790a; --bad:#c23b3b;
+  --font-display:'Newsreader',Georgia,serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1117; --surface:#171a24; --surface-2:#1f2330; --raised:#1b1f2a;
+    --ink:#eef0fb; --ink-2:#b4b8d6; --muted:#7d81a0;
+    --border:rgba(255,255,255,0.12); --grid:#272b3a;
+    --accent:#8b7cf6; --accent-strong:#ac9ffb; --accent-soft:#241f45; --accent-contrast:#100c24;
+    --amber:#f0a94e; --amber-strong:#ffc482; --amber-soft:#3a2a10; --amber-contrast:#1c1304;
+    --good:#4fbf78; --warn:#f0b429; --bad:#e2726f;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1117; --surface:#171a24; --surface-2:#1f2330; --raised:#1b1f2a;
+  --ink:#eef0fb; --ink-2:#b4b8d6; --muted:#7d81a0;
+  --border:rgba(255,255,255,0.12); --grid:#272b3a;
+  --accent:#8b7cf6; --accent-strong:#ac9ffb; --accent-soft:#241f45; --accent-contrast:#100c24;
+  --amber:#f0a94e; --amber-strong:#ffc482; --amber-soft:#3a2a10; --amber-contrast:#1c1304;
+  --good:#4fbf78; --warn:#f0b429; --bad:#e2726f;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;}
+body{background:var(--bg); color:var(--ink); font-family:var(--font-body); margin:0; font-size:15px; line-height:1.55;
+     padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));}
+.shell{max-width:980px; margin:0 auto;}
+h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0; color:var(--ink);}
+h2{font-size:21px; font-weight:600;}
+h3{font-size:16px; font-weight:600;}
+p{margin:0;}
+em{font-style:italic; color:var(--accent-strong);}
+.mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:var(--accent);}
+::selection{background:var(--accent-soft); color:var(--ink);}
+
+.topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--bg); border-bottom:1px solid var(--border); margin:0 -16px;}
+.topbar-inner{max-width:980px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;}
+.brand{display:flex; align-items:baseline; gap:9px; min-width:0;}
+.brand-mark{width:10px; height:10px; border-radius:2px; background:var(--accent); flex:none;}
+.brand-name{font-weight:700; font-size:15px; letter-spacing:.01em;}
+.brand-sub{color:var(--muted); font-size:12.5px;}
+
+.pillnav{position:sticky; top:calc(env(safe-area-inset-top,0px) + 47px); z-index:29; background:var(--bg); border-bottom:1px solid var(--border); margin:0 -16px;}
+.pillnav-inner{max-width:980px; margin:0 auto; padding:9px 16px; display:flex; gap:7px; overflow-x:auto; scrollbar-width:none;}
+.pillnav-inner::-webkit-scrollbar{display:none;}
+.pill{flex:none; font-family:var(--font-mono); font-size:12px; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--ink-2); background:var(--surface); white-space:nowrap; cursor:pointer; text-decoration:none;}
+.pill:hover{border-color:var(--accent);}
+
+.hero{padding:30px 0 22px;}
+.eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); font-weight:600;}
+.hero h1{font-size:clamp(24px,4vw,32px); margin-top:6px; font-weight:700;}
+.hero p.lede{margin-top:10px; max-width:66ch; color:var(--ink-2); font-size:15px;}
+
+section.step{padding:34px 0; border-top:1px solid var(--border);}
+section.step:first-of-type{border-top:none;}
+.step-head{display:flex; gap:12px; align-items:flex-start; margin-bottom:16px;}
+.step-num{font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:700; background:var(--accent-soft); border-radius:7px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex:none;}
+.step-head h2{font-size:19px;}
+.step-head p{color:var(--ink-2); font-size:13.5px; margin-top:3px;}
+.step-phase{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); font-weight:700; margin:0 0 2px;}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; min-width:0;}
+.card + .card{margin-top:12px;}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+.grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+@media (max-width:720px){ .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;} }
+
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;}
+th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600;}
+tbody tr:hover{background:var(--surface-2);}
+.table-wrap{overflow-x:auto; border-radius:10px;}
+
+.btnrow{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+button{font-family:var(--font-body); font-size:13.5px; font-weight:600; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink); padding:9px 14px; cursor:pointer;}
+button:hover{border-color:var(--accent);}
+.checkrow{display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface); cursor:pointer; user-select:none;}
+.checkrow input{accent-color:var(--accent);}
+.checkrow.disabled{opacity:.4; cursor:not-allowed;}
+
+.note{font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border-radius:8px; padding:10px 12px; border:1px solid var(--border);}
+.note b{color:var(--ink);}
+.note.warn{color:var(--amber-strong); background:var(--amber-soft); border-color:transparent;}
+.note.bad{color:var(--bad);}
+
+.dropzone{border:1.5px dashed var(--border); border-radius:12px; padding:22px; text-align:center; cursor:pointer; background:var(--surface);}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent); background:var(--accent-soft);}
+.dropzone input{display:none;}
+.dropzone .dz-title{font-weight:600; font-size:14px;}
+.dropzone .dz-sub{color:var(--muted); font-size:12.5px; margin-top:4px;}
+
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:12px; color:var(--ink-2); font-weight:500;}
+select{font-family:var(--font-mono); font-size:13px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--raised); color:var(--ink); width:100%;}
+
+.metric{border-radius:12px; padding:14px 16px; border:1px solid var(--border); background:var(--surface); text-align:center;}
+.metric .val{font-family:var(--font-mono); font-size:26px; font-weight:600; color:var(--accent-strong);}
+.metric .lab{font-size:11.5px; color:var(--muted); margin-top:3px;}
+
+.eqn{font-family:var(--font-mono); font-size:14px; background:var(--accent-strong); color:var(--accent-contrast); padding:14px 16px; border-radius:10px; overflow-x:auto; white-space:nowrap;}
+:root[data-theme="dark"] .eqn, @media (prefers-color-scheme:dark){ } /* handled via token colors */
+
+.sigbadge{font-family:var(--font-mono); font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600;}
+.sigbadge.yes{color:var(--good); background:rgba(26,122,66,.12);}
+:root[data-theme="dark"] .sigbadge.yes, @media (prefers-color-scheme:dark){ .sigbadge.yes{background:rgba(79,191,120,.16);} }
+.sigbadge.no{color:var(--warn); background:rgba(181,121,10,.12);}
+
+.chart-wrap{position:relative; height:240px; min-width:0;}
+canvas{display:block; width:100%; height:100%;}
+
+.slider-row{display:flex; flex-direction:column; gap:6px; padding:12px 0; border-bottom:1px solid var(--border);}
+.slider-row:last-child{border-bottom:none;}
+.slider-row .sr-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.slider-row .sr-name{font-size:13.5px; font-weight:600;}
+.slider-row .sr-val{font-family:var(--font-mono); font-size:13.5px; color:var(--amber-strong); font-weight:600;}
+input[type=range]{width:100%; accent-color:var(--amber);}
+.sr-range{font-family:var(--font-mono); font-size:11px; color:var(--muted); display:flex; justify-content:space-between;}
+
+.predbox{border-radius:14px; padding:20px; background:linear-gradient(135deg, var(--amber-soft), var(--surface)); border:1px solid var(--border); text-align:center;}
+.predbox .pv{font-family:var(--font-mono); font-size:34px; font-weight:700; color:var(--amber-strong);}
+.predbox .pl{font-size:12.5px; color:var(--ink-2); margin-top:4px;}
+.predbox .pi{font-family:var(--font-mono); font-size:12.5px; color:var(--muted); margin-top:10px;}
+
+footer{padding:30px 0 50px; border-top:1px solid var(--border); margin-top:10px;}
+footer p{color:var(--muted); font-size:12.5px; max-width:70ch;}
+footer p + p{margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Laboratorio de Regresión</span>
+      <span class="brand-sub">&nbsp;· Tu Idea en 3D</span>
+    </div>
+    <span class="mono" style="font-size:11.5px;color:var(--muted);" id="rowCountNote">42 filas</span>
+  </div>
+</div>
+<div class="pillnav">
+  <div class="pillnav-inner">
+    <a class="pill" href="#s1">1 · Importar</a>
+    <a class="pill" href="#s2">2 · Variables</a>
+    <a class="pill" href="#s3">3 · Correlación</a>
+    <a class="pill" href="#s4">4 · Modelo</a>
+    <a class="pill" href="#s5">5 · Diagnóstico</a>
+    <a class="pill" href="#s6">6 · Simulador</a>
+    <a class="pill" href="#s7">7 · Interpretación</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="hero">
+    <div class="eyebrow">Regresión lineal múltiple · Pronósticos · metodología CRISP-DM</div>
+    <h1>Qué variables explican realmente tus resultados</h1>
+    <p class="lede">Importa tu propia tabla (o usa la bitácora de inversión en publicidad de Tu Idea en 3D, ya cargada), elige la variable que quieres explicar y hasta 4 predictoras, y el modelo de mínimos cuadrados se ajusta <em>en vivo, en tu navegador</em> — con sus diagnósticos y un simulador de escenarios "qué pasaría si".</p>
+  </div>
+
+  <!-- ===== 1 · IMPORTAR ===== -->
+  <section class="step" id="s1">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Importar la base de datos</h2>
+        <p>Cualquier archivo de datos tabulares: CSV, TSV, JSON, Excel u OpenDocument. Ya viene cargada la bitácora mensual de inversión en publicidad e ingresos de Tu Idea en 3D — puedes reemplazarla por la tuya.</p>
+      </div>
+    </div>
+    <div class="card">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,.xlsm,.ods">
+        <div class="dz-title">Arrastra un archivo o haz clic para elegirlo</div>
+        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods</div>
+      </label>
+      <div id="fileStatus" class="note" style="margin-top:12px;"></div>
+      <div class="btnrow" style="margin-top:10px;">
+        <button type="button" id="btnRestore">Restaurar bitácora de ejemplo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2 · VARIABLES ===== -->
+  <section class="step" id="s2">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Primeras filas y elección de variables</h2>
+        <p>Elige la variable numérica que quieres <b>explicar</b> (objetivo) y hasta 4 variables numéricas <b>predictoras</b>.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="headTable"></table></div>
+      <p class="note" id="shapeNote" style="margin-top:10px;"></p>
+    </div>
+    <div class="card">
+      <div class="grid-2">
+        <div class="field">
+          <label>Variable objetivo (lo que quieres explicar)</label>
+          <select id="targetSelect"></select>
+        </div>
+        <div class="field">
+          <label>Variables predictoras (marca hasta 4)</label>
+          <div id="featChecks" style="display:flex; flex-direction:column; gap:7px; margin-top:2px;"></div>
+        </div>
+      </div>
+      <p class="note" id="varNote" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ===== 3 · CORRELACIÓN ===== -->
+  <section class="step" id="s3">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Correlaciones y multicolinealidad</h2>
+        <p>Correlación de Pearson entre todas las variables numéricas elegidas, y el Factor de Inflación de Varianza (VIF) de cada predictora &mdash; VIF &gt; 5 es señal de alerta, VIF &gt; 10 es grave.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="corrTable"></table></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="vifTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ===== 4 · MODELO ===== -->
+  <section class="step" id="s4">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
+        <h2>El modelo de regresión múltiple</h2>
+        <p>Ajustado por mínimos cuadrados ordinarios (OLS) con <b>todos los datos disponibles</b> &mdash; aquí el objetivo es entender la relación entre variables, no medir qué tan bien generaliza a datos nuevos.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="eqn" id="eqnBox"></div>
+    </div>
+    <div class="card">
+      <div class="grid-4" id="metricCards"></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="coefTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ===== 5 · DIAGNÓSTICO ===== -->
+  <section class="step" id="s5">
+    <div class="step-head">
+      <div class="step-num">5</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 5 &middot; Evaluación</p>
+        <h2>Diagnóstico de residuales</h2>
+        <p>Antes de confiar en el modelo: ¿los residuales se ven como ruido aleatorio (sin patrón, sin autocorrelación, aproximadamente simétricos)?</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin-bottom:8px;">Residuales vs. valores ajustados</h3>
+        <div class="chart-wrap"><canvas id="chartResidFit"></canvas></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px;">Histograma de residuales</h3>
+        <div class="chart-wrap"><canvas id="chartResidHist"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="grid-3" id="diagMetrics"></div>
+      <p class="note" id="diagNote" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ===== 6 · SIMULADOR ===== -->
+  <section class="step" id="s6">
+    <div class="step-head">
+      <div class="step-num">6</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
+        <h2>Simulador de escenarios &mdash; "¿qué pasaría si...?"</h2>
+        <p>Mueve los controles para plantear un escenario hipotético y el modelo predice la variable objetivo en vivo, con su intervalo de confianza (para el promedio) y de predicción (para un caso individual).</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card" id="sliderHost"></div>
+      <div class="predbox" id="predBox"></div>
+    </div>
+  </section>
+
+  <!-- ===== 7 · INTERPRETACIÓN ===== -->
+  <section class="step" id="s7">
+    <div class="step-head">
+      <div class="step-num">7</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
+        <h2>Interpretación de negocio</h2>
+        <p>Qué dice el modelo, en palabras simples.</p>
+      </div>
+    </div>
+    <div class="card" id="interpretHost"></div>
+  </section>
+
+  <footer>
+    <p><b>Honestidad metodológica:</b> el modelo (mínimos cuadrados, pruebas t y F, VIF, intervalos de predicción) corre completo en tu navegador, con las mismas fórmulas que usa cualquier paquete estadístico. Con 4 variables o menos y pocas decenas de filas, los p-valores y el R² ajustado son más confiables que el R² simple &mdash; por eso el modelo limita a un máximo de 4 predictoras. La bitácora precargada es una simulación de la actividad mensual de Tu Idea en 3D; con tus propios datos, reemplázala en el paso 1 y todo se recalcula solo.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============== THEME ============== */
+  function currentTheme(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark' || t === 'light') return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  var PAL = {
+    light:{ text:'#171a2b', text2:'#565b78', muted:'#8a8fab', grid:'#e3e4f0', line:'#4338ca', fill:'rgba(67,56,202,.12)', bad:'#c23b3b' },
+    dark:{ text:'#eef0fb', text2:'#b4b8d6', muted:'#7d81a0', grid:'#272b3a', line:'#8b7cf6', fill:'rgba(139,124,246,.18)', bad:'#e2726f' }
+  };
+  function pal(){ return PAL[currentTheme()]; }
+
+  /* ============== STATS HELPERS ============== */
+  function lgamma(x){
+    var g=7;
+    var c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,
+      771.32342877765313,-176.61502916214059,12.507343278686905,
+      -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if (x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x)) - lgamma(1-x);
+    x -= 1;
+    var a = c[0]; var t = x+g+0.5;
+    for (var i=1;i<g+2;i++) a += c[i]/(x+i);
+    return 0.5*Math.log(2*Math.PI) + (x+0.5)*Math.log(t) - t + Math.log(a);
+  }
+  function betacf(x,a,b){
+    var MAXIT=200, EPS=3e-9, FPMIN=1e-300;
+    var qab=a+b, qap=a+1, qam=a-1;
+    var c=1, d=1-qab*x/qap;
+    if (Math.abs(d)<FPMIN) d=FPMIN;
+    d=1/d; var h=d;
+    for (var m=1;m<=MAXIT;m++){
+      var m2=2*m;
+      var aa=m*(b-m)*x/((qam+m2)*(a+m2));
+      d=1+aa*d; if (Math.abs(d)<FPMIN) d=FPMIN;
+      c=1+aa/c; if (Math.abs(c)<FPMIN) c=FPMIN;
+      d=1/d; h*=d*c;
+      aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+      d=1+aa*d; if (Math.abs(d)<FPMIN) d=FPMIN;
+      c=1+aa/c; if (Math.abs(c)<FPMIN) c=FPMIN;
+      d=1/d; var del=d*c; h*=del;
+      if (Math.abs(del-1)<EPS) break;
+    }
+    return h;
+  }
+  function betai(x,a,b){
+    if (x<=0) return 0; if (x>=1) return 1;
+    var bt = Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));
+    if (x < (a+1)/(a+b+2)) return bt*betacf(x,a,b)/a;
+    return 1-bt*betacf(1-x,b,a)/b;
+  }
+  function tTwoSidedP(t, v){ var x = v/(v+t*t); return betai(x, v/2, 0.5); }
+  function fUpperP(f, df1, df2){ if (f<=0) return 1; var x = df2/(df2+df1*f); return betai(x, df2/2, df1/2); }
+  function tCrit(alpha, v){
+    var lo=0, hi=60;
+    for (var i=0;i<100;i++){ var mid=(lo+hi)/2; if (tTwoSidedP(mid,v) > alpha) lo=mid; else hi=mid; }
+    return (lo+hi)/2;
+  }
+
+  /* ============== MATRIX / OLS ============== */
+  function matTranspose(A){ return A[0].map(function(_,j){ return A.map(function(row){ return row[j]; }); }); }
+  function matMul(A,B){
+    var r=A.length, k=A[0].length, c=B[0].length;
+    var out = Array.from({length:r}, function(){ return new Array(c).fill(0); });
+    for (var i=0;i<r;i++) for (var j=0;j<c;j++){ var s=0; for (var p=0;p<k;p++) s+=A[i][p]*B[p][j]; out[i][j]=s; }
+    return out;
+  }
+  function matVec(A,v){ return A.map(function(row){ return row.reduce(function(s,a,j){ return s+a*v[j]; },0); }); }
+  function matInv(A){
+    var n = A.length;
+    var M = A.map(function(row,i){ return row.concat(Array.from({length:n},function(_,j){return i===j?1:0;})); });
+    for (var col=0; col<n; col++){
+      var piv = col;
+      for (var r=col+1;r<n;r++) if (Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+      var tmp=M[col]; M[col]=M[piv]; M[piv]=tmp;
+      var pv = M[col][col];
+      if (Math.abs(pv) < 1e-9) return null; // singular: multicolinealidad perfecta
+      for (var j=0;j<2*n;j++) M[col][j]/=pv;
+      for (r=0;r<n;r++){
+        if (r===col) continue;
+        var factor = M[r][col];
+        for (j=0;j<2*n;j++) M[r][j]-=factor*M[col][j];
+      }
+    }
+    return M.map(function(row){ return row.slice(n); });
+  }
+  function fitOLS(X, y){
+    var n = X.length, k = X[0].length;
+    var Xi = X.map(function(row){ return [1].concat(row); });
+    var Xt = matTranspose(Xi);
+    var XtX = matMul(Xt, Xi);
+    var XtXinv = matInv(XtX);
+    if (!XtXinv) return null;
+    var Xty = Xt.map(function(row){ return row.reduce(function(s,v,i){ return s+v*y[i]; },0); });
+    var beta = matVec(XtXinv, Xty);
+    var fitted = Xi.map(function(row){ return row.reduce(function(s,v,j){ return s+v*beta[j]; },0); });
+    var resid = y.map(function(v,i){ return v-fitted[i]; });
+    var ssRes = resid.reduce(function(s,e){ return s+e*e; },0);
+    var yMean = y.reduce(function(a,b){return a+b;},0)/n;
+    var ssTot = y.reduce(function(s,v){ return s+(v-yMean)*(v-yMean); },0);
+    var df = n-k-1;
+    if (df<=0) return null;
+    var mse = ssRes/df;
+    var se = XtXinv.map(function(row,i){ return Math.sqrt(Math.max(mse*row[i],0)); });
+    return {beta:beta, se:se, fitted:fitted, resid:resid, ssRes:ssRes, ssTot:ssTot, df:df, mse:mse, XtXinv:XtXinv, n:n, k:k};
+  }
+  function vifOf(M, j){
+    var y = M.map(function(row){ return row[j]; });
+    var X = M.map(function(row){ return row.filter(function(_,i){ return i!==j; }); });
+    var fit = fitOLS(X,y);
+    if (!fit) return Infinity;
+    var r2 = 1-fit.ssRes/fit.ssTot;
+    if (r2>=0.9999) return Infinity;
+    return 1/(1-r2);
+  }
+  function pearson(xs, ys){
+    var n=xs.length, mx=xs.reduce(function(a,b){return a+b;},0)/n, my=ys.reduce(function(a,b){return a+b;},0)/n;
+    var sxy=0, sxx=0, syy=0;
+    for (var i=0;i<n;i++){ var dx=xs[i]-mx, dy=ys[i]-my; sxy+=dx*dy; sxx+=dx*dx; syy+=dy*dy; }
+    if (sxx===0||syy===0) return 0;
+    return sxy/Math.sqrt(sxx*syy);
+  }
+
+  /* ============== EMBEDDED DEFAULT DATA (bitácora mensual, Tu Idea en 3D) ============== */
+  var EMBEDDED = [{"Mes":"2023-01","Inversion_publicidad":400000,"Seguidores_nuevos":104,"Consultas_recibidas":29,"Ingresos_mensuales":1230000},{"Mes":"2023-02","Inversion_publicidad":445000,"Seguidores_nuevos":227,"Consultas_recibidas":33,"Ingresos_mensuales":2790000},{"Mes":"2023-03","Inversion_publicidad":359000,"Seguidores_nuevos":349,"Consultas_recibidas":43,"Ingresos_mensuales":2200000},{"Mes":"2023-04","Inversion_publicidad":266000,"Seguidores_nuevos":73,"Consultas_recibidas":20,"Ingresos_mensuales":1880000},{"Mes":"2023-05","Inversion_publicidad":332000,"Seguidores_nuevos":302,"Consultas_recibidas":46,"Ingresos_mensuales":2660000},{"Mes":"2023-06","Inversion_publicidad":251000,"Seguidores_nuevos":231,"Consultas_recibidas":36,"Ingresos_mensuales":2720000},{"Mes":"2023-07","Inversion_publicidad":409000,"Seguidores_nuevos":159,"Consultas_recibidas":34,"Ingresos_mensuales":2450000},{"Mes":"2023-08","Inversion_publicidad":601000,"Seguidores_nuevos":410,"Consultas_recibidas":61,"Ingresos_mensuales":3380000},{"Mes":"2023-09","Inversion_publicidad":326000,"Seguidores_nuevos":292,"Consultas_recibidas":37,"Ingresos_mensuales":3070000},{"Mes":"2023-10","Inversion_publicidad":307000,"Seguidores_nuevos":106,"Consultas_recibidas":33,"Ingresos_mensuales":2820000},{"Mes":"2023-11","Inversion_publicidad":473000,"Seguidores_nuevos":227,"Consultas_recibidas":41,"Ingresos_mensuales":2800000},{"Mes":"2023-12","Inversion_publicidad":454000,"Seguidores_nuevos":275,"Consultas_recibidas":46,"Ingresos_mensuales":2990000},{"Mes":"2024-01","Inversion_publicidad":416000,"Seguidores_nuevos":202,"Consultas_recibidas":29,"Ingresos_mensuales":2150000},{"Mes":"2024-02","Inversion_publicidad":260000,"Seguidores_nuevos":285,"Consultas_recibidas":38,"Ingresos_mensuales":2110000},{"Mes":"2024-03","Inversion_publicidad":396000,"Seguidores_nuevos":214,"Consultas_recibidas":27,"Ingresos_mensuales":2550000},{"Mes":"2024-04","Inversion_publicidad":504000,"Seguidores_nuevos":283,"Consultas_recibidas":33,"Ingresos_mensuales":2320000},{"Mes":"2024-05","Inversion_publicidad":198000,"Seguidores_nuevos":357,"Consultas_recibidas":36,"Ingresos_mensuales":2400000},{"Mes":"2024-06","Inversion_publicidad":331000,"Seguidores_nuevos":156,"Consultas_recibidas":25,"Ingresos_mensuales":1590000},{"Mes":"2024-07","Inversion_publicidad":115000,"Seguidores_nuevos":239,"Consultas_recibidas":28,"Ingresos_mensuales":1630000},{"Mes":"2024-08","Inversion_publicidad":207000,"Seguidores_nuevos":176,"Consultas_recibidas":40,"Ingresos_mensuales":1970000},{"Mes":"2024-09","Inversion_publicidad":124000,"Seguidores_nuevos":232,"Consultas_recibidas":22,"Ingresos_mensuales":2150000},{"Mes":"2024-10","Inversion_publicidad":365000,"Seguidores_nuevos":107,"Consultas_recibidas":25,"Ingresos_mensuales":1850000},{"Mes":"2024-11","Inversion_publicidad":210000,"Seguidores_nuevos":165,"Consultas_recibidas":28,"Ingresos_mensuales":2320000},{"Mes":"2024-12","Inversion_publicidad":441000,"Seguidores_nuevos":201,"Consultas_recibidas":41,"Ingresos_mensuales":2780000},{"Mes":"2025-01","Inversion_publicidad":424000,"Seguidores_nuevos":305,"Consultas_recibidas":42,"Ingresos_mensuales":2620000},{"Mes":"2025-02","Inversion_publicidad":372000,"Seguidores_nuevos":329,"Consultas_recibidas":41,"Ingresos_mensuales":2710000},{"Mes":"2025-03","Inversion_publicidad":80000,"Seguidores_nuevos":94,"Consultas_recibidas":21,"Ingresos_mensuales":1190000},{"Mes":"2025-04","Inversion_publicidad":319000,"Seguidores_nuevos":145,"Consultas_recibidas":33,"Ingresos_mensuales":2240000},{"Mes":"2025-05","Inversion_publicidad":393000,"Seguidores_nuevos":281,"Consultas_recibidas":34,"Ingresos_mensuales":2350000},{"Mes":"2025-06","Inversion_publicidad":417000,"Seguidores_nuevos":31,"Consultas_recibidas":26,"Ingresos_mensuales":1810000},{"Mes":"2025-07","Inversion_publicidad":170000,"Seguidores_nuevos":176,"Consultas_recibidas":26,"Ingresos_mensuales":1210000},{"Mes":"2025-08","Inversion_publicidad":328000,"Seguidores_nuevos":211,"Consultas_recibidas":27,"Ingresos_mensuales":1730000},{"Mes":"2025-09","Inversion_publicidad":253000,"Seguidores_nuevos":339,"Consultas_recibidas":40,"Ingresos_mensuales":3370000},{"Mes":"2025-10","Inversion_publicidad":279000,"Seguidores_nuevos":285,"Consultas_recibidas":31,"Ingresos_mensuales":1960000},{"Mes":"2025-11","Inversion_publicidad":559000,"Seguidores_nuevos":189,"Consultas_recibidas":48,"Ingresos_mensuales":2760000},{"Mes":"2025-12","Inversion_publicidad":279000,"Seguidores_nuevos":185,"Consultas_recibidas":31,"Ingresos_mensuales":2320000},{"Mes":"2026-01","Inversion_publicidad":395000,"Seguidores_nuevos":196,"Consultas_recibidas":36,"Ingresos_mensuales":3110000},{"Mes":"2026-02","Inversion_publicidad":533000,"Seguidores_nuevos":365,"Consultas_recibidas":48,"Ingresos_mensuales":2710000},{"Mes":"2026-03","Inversion_publicidad":312000,"Seguidores_nuevos":179,"Consultas_recibidas":31,"Ingresos_mensuales":2080000},{"Mes":"2026-04","Inversion_publicidad":383000,"Seguidores_nuevos":191,"Consultas_recibidas":23,"Ingresos_mensuales":1620000},{"Mes":"2026-05","Inversion_publicidad":417000,"Seguidores_nuevos":253,"Consultas_recibidas":33,"Ingresos_mensuales":1710000},{"Mes":"2026-06","Inversion_publicidad":410000,"Seguidores_nuevos":209,"Consultas_recibidas":39,"Ingresos_mensuales":2990000}];
+
+  /* ============== STATE ============== */
+  var state = {
+    rows: EMBEDDED.slice(),
+    columns: ['Mes','Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'],
+    numericCols: ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'],
+    targetCol: 'Ingresos_mensuales',
+    featCols: ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas'],
+    fit: null,
+    sliderVals: {}
+  };
+
+  function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+  function fmtNum(v,d){ if (v==null||isNaN(v)) return '—'; return Number(v).toLocaleString('es-CO',{maximumFractionDigits:d==null?2:d}); }
+  function fmtCOP(v){ if (v==null||isNaN(v)) return '—'; return '$'+Math.round(v).toLocaleString('es-CO'); }
+
+  /* ============== PARSING ============== */
+  function looksLikeId(c, rows){
+    if (/(^|_)id($|_)|^id$|^no\.?$|^#$/i.test(c)) return true;
+    return false;
+  }
+  function detectColumns(rows){
+    var cols = Object.keys(rows[0] || {});
+    var numeric = [], text = [];
+    cols.forEach(function(c){
+      var vals = rows.map(function(r){ return r[c]; }).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+      var numCount = vals.filter(function(v){ return (typeof v === 'number' && isFinite(v)) || (typeof v==='string' && v.trim()!=='' && isFinite(Number(v))); }).length;
+      if (vals.length && numCount/vals.length >= 0.8) numeric.push(c); else text.push(c);
+    });
+    return { cols:cols, numeric:numeric, text:text };
+  }
+  function onParsed(rows, filename){
+    rows = (rows||[]).filter(function(r){ return r && Object.keys(r).length; });
+    if (!rows.length){ showStatus('El archivo "'+filename+'" no tiene filas reconocibles.', true); return; }
+    var det = detectColumns(rows);
+    if (det.numeric.length < 2){ showStatus('El archivo "'+filename+'" necesita al menos 2 columnas numéricas (una objetivo y una predictora).', true); return; }
+    state.rows = rows;
+    state.columns = det.cols;
+    state.numericCols = det.numeric.filter(function(c){ return !looksLikeId(c, rows); });
+    if (state.numericCols.length < 2) state.numericCols = det.numeric;
+    state.targetCol = state.numericCols[state.numericCols.length-1];
+    state.featCols = state.numericCols.filter(function(c){ return c!==state.targetCol; }).slice(0,4);
+    state.sliderVals = {};
+    showStatus(rows.length + ' filas cargadas de "'+filename+'" · '+det.numeric.length+' columnas numéricas detectadas.', false);
+    renderAll();
+  }
+  function showStatus(msg, isWarn){
+    var el = document.getElementById('fileStatus');
+    el.textContent = msg;
+    el.className = 'note' + (isWarn ? ' warn' : '');
+  }
+  function parseFile(file){
+    var name = file.name || 'archivo';
+    var ext = (name.split('.').pop()||'').toLowerCase();
+    if (ext === 'json'){
+      var r1 = new FileReader();
+      r1.onload = function(e){
+        try{ var data = JSON.parse(e.target.result); onParsed(Array.isArray(data)?data:(data.rows||data.data||[]), name); }
+        catch(err){ showStatus('No se pudo leer el JSON: '+err.message, true); }
+      };
+      r1.readAsText(file);
+    } else if (['xlsx','xls','xlsm','ods'].indexOf(ext) !== -1){
+      var r2 = new FileReader();
+      r2.onload = function(e){
+        try{
+          var wb = XLSX.read(e.target.result, {type:'array'});
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var data = XLSX.utils.sheet_to_json(sheet, {defval:null});
+          onParsed(data, name);
+        } catch(err){ showStatus('No se pudo leer el archivo: '+err.message, true); }
+      };
+      r2.readAsArrayBuffer(file);
+    } else {
+      Papa.parse(file, {
+        header:true, dynamicTyping:true, skipEmptyLines:true,
+        complete: function(res){ onParsed(res.data, name); },
+        error: function(err){ showStatus('No se pudo leer el archivo: '+err.message, true); }
+      });
+    }
+  }
+
+  /* ============== RENDER: HEAD TABLE ============== */
+  function renderHead(){
+    var cols = state.columns;
+    var rows = state.rows.slice(0,5);
+    var html = '<thead><tr>' + cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('') + '</tr></thead><tbody>';
+    rows.forEach(function(r){
+      html += '<tr>' + cols.map(function(c){
+        var v = r[c];
+        if (typeof v === 'number') v = fmtNum(v, 2);
+        return '<td>'+ (v===undefined||v===null||v===''?'<span style="color:var(--muted)">&mdash;</span>':esc(v)) +'</td>';
+      }).join('') + '</tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('headTable').innerHTML = html;
+    document.getElementById('shapeNote').innerHTML = '<b>'+state.rows.length+'</b> filas &times; <b>'+cols.length+'</b> columnas &middot; <b>'+state.numericCols.length+'</b> numéricas.';
+    document.getElementById('rowCountNote').textContent = state.rows.length + ' filas';
+  }
+
+  /* ============== RENDER: VARIABLE PICKERS ============== */
+  function renderVarPickers(){
+    var tSel = document.getElementById('targetSelect');
+    tSel.innerHTML = state.numericCols.map(function(c){ return '<option value="'+esc(c)+'"'+(c===state.targetCol?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
+    tSel.onchange = function(){
+      state.targetCol = tSel.value;
+      state.featCols = state.featCols.filter(function(c){ return c!==state.targetCol; });
+      state.sliderVals = {};
+      renderAll();
+    };
+
+    var host = document.getElementById('featChecks');
+    var avail = state.numericCols.filter(function(c){ return c!==state.targetCol; });
+    host.innerHTML = avail.map(function(c){
+      var checked = state.featCols.indexOf(c) !== -1;
+      var disableNew = (!checked && state.featCols.length>=4);
+      return '<label class="checkrow'+(disableNew?' disabled':'')+'"><input type="checkbox" data-col="'+esc(c)+'" '+(checked?'checked':'')+(disableNew?' disabled':'')+'> <span class="mono" style="font-size:12.5px;">'+esc(c)+'</span></label>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('input[type=checkbox]'), function(cb){
+      cb.addEventListener('change', function(){
+        var c = cb.getAttribute('data-col');
+        if (cb.checked){ if (state.featCols.length<4) state.featCols.push(c); else { cb.checked=false; return; } }
+        else { state.featCols = state.featCols.filter(function(x){ return x!==c; }); delete state.sliderVals[c]; }
+        renderAll();
+      });
+    });
+
+    var note = document.getElementById('varNote');
+    if (state.featCols.length === 0) note.innerHTML = 'Elige al menos una variable predictora para ajustar el modelo.';
+    else note.innerHTML = 'Modelo: <b>'+esc(state.targetCol)+' ~ '+state.featCols.map(esc).join(' + ')+'</b> &middot; n = '+state.rows.length+', '+state.featCols.length+' predictora(s).';
+  }
+
+  /* ============== BUILD DESIGN MATRIX ============== */
+  function numericValue(v){ var n = (typeof v==='number')?v:parseFloat(v); return isFinite(n)?n:null; }
+  function buildMatrix(cols){
+    var rows = state.rows.filter(function(r){
+      return cols.every(function(c){ return numericValue(r[c])!==null; });
+    });
+    var M = rows.map(function(r){ return cols.map(function(c){ return numericValue(r[c]); }); });
+    return {M:M, rows:rows};
+  }
+
+  /* ============== RENDER: CORRELATION + VIF ============== */
+  function renderCorrelation(){
+    var cols = [state.targetCol].concat(state.featCols);
+    var built = buildMatrix(cols);
+    var M = built.M;
+    var html = '<thead><tr><th></th>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+    cols.forEach(function(ci,i){
+      html += '<tr><th>'+esc(ci)+'</th>' + cols.map(function(cj,j){
+        var xs = M.map(function(row){return row[i];}), ys = M.map(function(row){return row[j];});
+        var r = pearson(xs,ys);
+        var strong = Math.abs(r)>=0.6 && i!==j;
+        return '<td class="mono" style="'+(strong?'font-weight:700;color:var(--accent-strong);':'')+'">'+r.toFixed(2)+'</td>';
+      }).join('') + '</tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('corrTable').innerHTML = html;
+
+    var vifHtml = '<thead><tr><th>Predictora</th><th>VIF</th><th>Lectura</th></tr></thead><tbody>';
+    if (state.featCols.length < 2){
+      vifHtml += '<tr><td colspan="3" class="mono" style="color:var(--muted);">Se necesitan al menos 2 predictoras para calcular VIF.</td></tr>';
+    } else {
+      var fcols = [state.targetCol].concat(state.featCols);
+      var builtF = buildMatrix(state.featCols);
+      state.featCols.forEach(function(c,j){
+        var v = vifOf(builtF.M, j);
+        var read = v===Infinity ? 'Colinealidad perfecta' : (v>10?'Grave':(v>5?'Alerta':'Aceptable'));
+        var color = v===Infinity||v>10 ? 'var(--bad)' : (v>5?'var(--warn)':'var(--good)');
+        vifHtml += '<tr><td class="mono">'+esc(c)+'</td><td class="mono">'+(v===Infinity?'&infin;':v.toFixed(2))+'</td><td style="color:'+color+';font-weight:600;">'+read+'</td></tr>';
+      });
+    }
+    vifHtml += '</tbody>';
+    document.getElementById('vifTable').innerHTML = vifHtml;
+  }
+
+  /* ============== FIT + RENDER MODEL ============== */
+  function rebuildFit(){
+    if (state.featCols.length === 0){ state.fit = null; return; }
+    var cols = state.featCols.concat([state.targetCol]);
+    var built = buildMatrix(cols);
+    var M = built.M;
+    if (M.length < state.featCols.length + 3){ state.fit = null; return; }
+    var X = M.map(function(row){ return row.slice(0, state.featCols.length); });
+    var y = M.map(function(row){ return row[row.length-1]; });
+    var fit = fitOLS(X,y);
+    if (fit){
+      fit.featRanges = state.featCols.map(function(c,j){
+        var vals = X.map(function(row){ return row[j]; });
+        return {min:Math.min.apply(null,vals), max:Math.max.apply(null,vals), mean:vals.reduce(function(a,b){return a+b;},0)/vals.length};
+      });
+    }
+    state.fit = fit;
+  }
+
+  function renderModel(){
+    var fit = state.fit;
+    var eqnBox = document.getElementById('eqnBox');
+    var metricHost = document.getElementById('metricCards');
+    var coefHost = document.getElementById('coefTable');
+    if (!fit){
+      eqnBox.textContent = 'Elige al menos una variable predictora arriba para ajustar el modelo.';
+      metricHost.innerHTML = ''; coefHost.innerHTML = '';
+      return;
+    }
+    eqnBox.textContent = state.targetCol + ' = ' + fit.beta[0].toFixed(2) + state.featCols.map(function(c,j){
+      var b = fit.beta[j+1];
+      return (b>=0?' + ':' − ') + Math.abs(b).toFixed(4) + '·' + c;
+    }).join('') + '   (n='+fit.n+', todos los datos)';
+
+    var r2 = 1-fit.ssRes/fit.ssTot;
+    var r2adj = 1-(1-r2)*(fit.n-1)/fit.df;
+    var fstat = ((fit.ssTot-fit.ssRes)/fit.k) / (fit.ssRes/fit.df);
+    var pF = fUpperP(fstat, fit.k, fit.df);
+    metricHost.innerHTML = [
+      {v:r2.toFixed(3), l:'R²'},
+      {v:r2adj.toFixed(3), l:'R² ajustado'},
+      {v:fstat.toFixed(2), l:'F-statistic'},
+      {v:(pF<0.001?'<0.001':pF.toFixed(3)), l:'p-valor del modelo'}
+    ].map(function(m){ return '<div class="metric"><div class="val">'+m.v+'</div><div class="lab">'+m.l+'</div></div>'; }).join('');
+
+    var rows = '<thead><tr><th>Variable</th><th>Coef.</th><th>Error Est.</th><th>t</th><th>p-valor</th><th>Significancia</th></tr></thead><tbody>';
+    var names = ['Intercepto'].concat(state.featCols);
+    names.forEach(function(nm,j){
+      var b = fit.beta[j], se = fit.se[j], t = b/se, p = tTwoSidedP(Math.abs(t), fit.df);
+      var sig = p<0.05;
+      rows += '<tr><td class="mono">'+esc(nm)+'</td><td class="mono">'+b.toFixed(4)+'</td><td class="mono">'+se.toFixed(4)+'</td><td class="mono">'+t.toFixed(2)+'</td><td class="mono">'+(p<0.001?'<0.001':p.toFixed(3))+'</td><td><span class="sigbadge '+(sig?'yes':'no')+'">'+(sig?'Significativa':'No significativa')+'</span></td></tr>';
+    });
+    rows += '</tbody>';
+    coefHost.innerHTML = rows;
+  }
+
+  /* ============== DIAGNOSTICS ============== */
+  function skewKurt(vals){
+    var n=vals.length, m=vals.reduce(function(a,b){return a+b;},0)/n;
+    var m2=0,m3=0,m4=0;
+    vals.forEach(function(v){ var d=v-m; m2+=d*d; m3+=d*d*d; m4+=d*d*d*d; });
+    m2/=n; m3/=n; m4/=n;
+    var sd = Math.sqrt(m2)||1;
+    var skew = m3/Math.pow(sd,3);
+    var kurt = m4/Math.pow(sd,4);
+    return {skew:skew, kurt:kurt};
+  }
+  function durbinWatson(resid){
+    var num=0; for (var i=1;i<resid.length;i++) num += Math.pow(resid[i]-resid[i-1],2);
+    var den = resid.reduce(function(s,e){return s+e*e;},0);
+    return den? num/den : null;
+  }
+
+  function drawScatterGrid(canvasId, pts, opts){
+    var canvas = document.getElementById(canvasId);
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1,rect.width*dpr); canvas.height = Math.max(1,rect.height*dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W = rect.width, H = rect.height;
+    ctx.clearRect(0,0,W,H);
+    var p = pal();
+    if (!pts.length) return;
+    var padL=52, padB=30, padT=12, padR=12;
+    var plotW=W-padL-padR, plotH=H-padT-padB;
+    var xs = pts.map(function(pt){return pt.x;}), ys = pts.map(function(pt){return pt.y;});
+    var xMin=Math.min.apply(null,xs), xMax=Math.max.apply(null,xs);
+    var yMin=Math.min.apply(null,ys), yMax=Math.max.apply(null,ys);
+    var xPad=(xMax-xMin)*0.1||1, yPad=(yMax-yMin)*0.15||1;
+    xMin-=xPad; xMax+=xPad; yMin-=yPad; yMax+=yPad;
+    function px(v){ return padL + (v-xMin)/(xMax-xMin)*plotW; }
+    function py(v){ return padT + plotH - (v-yMin)/(yMax-yMin)*plotH; }
+    ctx.strokeStyle=p.grid; ctx.lineWidth=1; ctx.font='11px IBM Plex Mono, monospace'; ctx.fillStyle=p.text2;
+    for (var g=0; g<=4; g++){
+      var gy = padT + plotH - (g/4)*plotH;
+      ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillText(fmtNum(yMin+(yMax-yMin)*g/4,0), padL-8, gy+3);
+    }
+    if (opts && opts.zeroLine){
+      var zy = py(0);
+      if (zy>padT && zy<padT+plotH){ ctx.strokeStyle=p.muted; ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(padL,zy); ctx.lineTo(W-padR,zy); ctx.stroke(); ctx.setLineDash([]); }
+    }
+    pts.forEach(function(pt){
+      ctx.beginPath(); ctx.arc(px(pt.x), py(pt.y), 4, 0, 2*Math.PI);
+      ctx.fillStyle = p.line; ctx.globalAlpha=.75; ctx.fill(); ctx.globalAlpha=1;
+    });
+  }
+
+  function drawHistogram(canvasId, vals){
+    var canvas = document.getElementById(canvasId);
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1,rect.width*dpr); canvas.height = Math.max(1,rect.height*dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W = rect.width, H = rect.height;
+    ctx.clearRect(0,0,W,H);
+    var p = pal();
+    if (!vals.length) return;
+    var padL=40, padB=26, padT=12, padR=12;
+    var plotW=W-padL-padR, plotH=H-padT-padB;
+    var minV=Math.min.apply(null,vals), maxV=Math.max.apply(null,vals);
+    var bins=9, width=(maxV-minV)/bins||1;
+    var counts=new Array(bins).fill(0);
+    vals.forEach(function(v){ var idx=Math.min(bins-1,Math.floor((v-minV)/width)); counts[idx]++; });
+    var maxC = Math.max.apply(null,counts)*1.15 || 1;
+    ctx.strokeStyle=p.grid; ctx.font='10.5px IBM Plex Mono, monospace'; ctx.fillStyle=p.text2;
+    for (var g=0; g<=3; g++){
+      var gy = padT + plotH - (g/3)*plotH;
+      ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillText(Math.round(maxC*g/3), padL-6, gy+3);
+    }
+    var bw = plotW/bins;
+    counts.forEach(function(c,i){
+      var h = (c/maxC)*plotH;
+      var x = padL + i*bw + 2, y = padT+plotH-h;
+      ctx.fillStyle = p.line; ctx.globalAlpha=.8;
+      ctx.fillRect(x,y,bw-4,h);
+      ctx.globalAlpha=1;
+    });
+  }
+
+  function renderDiagnostics(){
+    var fit = state.fit;
+    var host = document.getElementById('diagMetrics');
+    var note = document.getElementById('diagNote');
+    if (!fit){
+      document.getElementById('chartResidFit').getContext('2d').clearRect(0,0,9999,9999);
+      document.getElementById('chartResidHist').getContext('2d').clearRect(0,0,9999,9999);
+      host.innerHTML=''; note.innerHTML=''; return;
+    }
+    var pts = fit.fitted.map(function(f,i){ return {x:f, y:fit.resid[i]}; });
+    drawScatterGrid('chartResidFit', pts, {zeroLine:true});
+    drawHistogram('chartResidHist', fit.resid);
+
+    var dw = durbinWatson(fit.resid);
+    var sk = skewKurt(fit.resid);
+    host.innerHTML = [
+      {v:dw.toFixed(2), l:'Durbin-Watson'},
+      {v:sk.skew.toFixed(2), l:'Asimetría (skew)'},
+      {v:sk.kurt.toFixed(2), l:'Curtosis'}
+    ].map(function(m){ return '<div class="metric"><div class="val">'+m.v+'</div><div class="lab">'+m.l+'</div></div>'; }).join('');
+
+    var msgs = [];
+    if (dw<1.5) msgs.push('Durbin-Watson bajo ('+dw.toFixed(2)+'): posible autocorrelación positiva en los residuales.');
+    else if (dw>2.5) msgs.push('Durbin-Watson alto ('+dw.toFixed(2)+'): posible autocorrelación negativa.');
+    else msgs.push('Durbin-Watson cercano a 2 ('+dw.toFixed(2)+'): no hay señal fuerte de autocorrelación.');
+    if (Math.abs(sk.skew)>1) msgs.push('Los residuales están sesgados (|asimetría|>1) — revisa si hay datos atípicos.');
+    else msgs.push('La asimetría de los residuales es moderada.');
+    note.innerHTML = msgs.join(' ');
+  }
+
+  /* ============== SCENARIO SIMULATOR ============== */
+  function renderSliders(){
+    var host = document.getElementById('sliderHost');
+    var fit = state.fit;
+    if (!fit){ host.innerHTML = '<p class="note">Ajusta el modelo primero (elige al menos una predictora).</p>'; return; }
+    var html = '';
+    state.featCols.forEach(function(c,j){
+      var rg = fit.featRanges[j];
+      if (!(c in state.sliderVals)) state.sliderVals[c] = rg.mean;
+      var val = state.sliderVals[c];
+      var span = (rg.max-rg.min) || 1;
+      var lo = rg.min - span*0.3, hi = rg.max + span*0.3;
+      html += '<div class="slider-row"><div class="sr-top"><span class="sr-name">'+esc(c)+'</span><span class="sr-val mono" id="srv-'+j+'">'+fmtNum(val,0)+'</span></div>' +
+        '<input type="range" min="'+lo+'" max="'+hi+'" step="'+(span/200)+'" value="'+val+'" data-idx="'+j+'">' +
+        '<div class="sr-range"><span>rango observado: '+fmtNum(rg.min,0)+'</span><span>'+fmtNum(rg.max,0)+'</span></div></div>';
+    });
+    host.innerHTML = html;
+    Array.prototype.forEach.call(host.querySelectorAll('input[type=range]'), function(sl){
+      sl.addEventListener('input', function(){
+        var j = +sl.getAttribute('data-idx');
+        var c = state.featCols[j];
+        state.sliderVals[c] = parseFloat(sl.value);
+        document.getElementById('srv-'+j).textContent = fmtNum(state.sliderVals[c],0);
+        renderPrediction();
+      });
+    });
+  }
+
+  function renderPrediction(){
+    var fit = state.fit;
+    var box = document.getElementById('predBox');
+    if (!fit){ box.innerHTML=''; return; }
+    var x0 = [1].concat(state.featCols.map(function(c){ return state.sliderVals[c]; }));
+    var pred = x0.reduce(function(s,v,j){ return s+v*fit.beta[j]; },0);
+    var XtXinv = fit.XtXinv;
+    var qf = 0;
+    for (var i=0;i<x0.length;i++) for (var j2=0;j2<x0.length;j2++) qf += x0[i]*XtXinv[i][j2]*x0[j2];
+    var seMean = Math.sqrt(Math.max(fit.mse*qf,0));
+    var seObs = Math.sqrt(Math.max(fit.mse*(1+qf),0));
+    var tc = tCrit(0.05, fit.df);
+    var outOfRange = state.featCols.some(function(c,j){ var rg=fit.featRanges[j]; var v=state.sliderVals[c]; return v<rg.min || v>rg.max; });
+
+    box.innerHTML =
+      '<div class="pv">'+fmtNum(pred,0)+'</div>' +
+      '<div class="pl">Predicción de '+esc(state.targetCol)+'</div>' +
+      '<div class="pi">IC 95% de la media: ['+fmtNum(pred-tc*seMean,0)+' , '+fmtNum(pred+tc*seMean,0)+']</div>' +
+      '<div class="pi">Intervalo de predicción 95%: ['+fmtNum(pred-tc*seObs,0)+' , '+fmtNum(pred+tc*seObs,0)+']</div>' +
+      (outOfRange ? '<div class="note warn" style="margin-top:12px;text-align:left;">⚠ Al menos un valor está <b>fuera del rango histórico</b> observado en los datos — esto es extrapolación: trata la predicción como tendencia, no como cifra exacta.</div>' : '');
+  }
+
+  /* ============== INTERPRETATION ============== */
+  function renderInterpretation(){
+    var fit = state.fit;
+    var host = document.getElementById('interpretHost');
+    if (!fit){ host.innerHTML='<p class="note">Ajusta el modelo primero.</p>'; return; }
+    var r2 = 1-fit.ssRes/fit.ssTot;
+    var sigVars = [], nosigVars = [];
+    state.featCols.forEach(function(c,j){
+      var b = fit.beta[j+1], se = fit.se[j+1], t=b/se, p=tTwoSidedP(Math.abs(t),fit.df);
+      if (p<0.05) sigVars.push({c:c,b:b}); else nosigVars.push(c);
+    });
+    var html = '<p>El modelo explica el <b>'+(r2*100).toFixed(1)+'%</b> de la variación en <b>'+esc(state.targetCol)+'</b>.</p>';
+    if (sigVars.length){
+      html += '<p style="margin-top:10px;">Las variables con <b>evidencia estadística sólida</b> (p&lt;0.05) son: ' +
+        sigVars.map(function(v){ return '<b>'+esc(v.c)+'</b> ('+(v.b>=0?'efecto positivo':'efecto negativo')+')'; }).join(', ') + '.</p>';
+    } else {
+      html += '<p style="margin-top:10px;">Ninguna variable individual alcanza significancia estadística (p&lt;0.05) con estos datos — el modelo en conjunto puede ser útil, pero no hay que apoyarse en un solo coeficiente.</p>';
+    }
+    if (nosigVars.length){
+      html += '<p style="margin-top:10px;">'+nosigVars.map(esc).join(', ')+' muestra(n) relación con '+esc(state.targetCol)+' en los datos, pero <b>no es concluyente</b> con este tamaño de muestra — no la uses como única base de una decisión.</p>';
+    }
+    host.innerHTML = html;
+  }
+
+  /* ============== FILE INPUT WIRING ============== */
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  fileInput.addEventListener('change', function(){ if (fileInput.files[0]) parseFile(fileInput.files[0]); });
+  dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('drag'); });
+  dropzone.addEventListener('drop', function(e){
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]);
+  });
+  document.getElementById('btnRestore').addEventListener('click', function(){
+    state.rows = EMBEDDED.slice();
+    state.columns = ['Mes','Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'];
+    state.numericCols = ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'];
+    state.targetCol = 'Ingresos_mensuales';
+    state.featCols = ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas'];
+    state.sliderVals = {};
+    showStatus('Bitácora de ejemplo restaurada.', false);
+    renderAll();
+  });
+
+  /* ============== MAIN RENDER ============== */
+  function renderAll(){
+    renderHead();
+    renderVarPickers();
+    renderCorrelation();
+    rebuildFit();
+    renderModel();
+    renderDiagnostics();
+    renderSliders();
+    renderPrediction();
+    renderInterpretation();
+  }
+
+  window.addEventListener('resize', function(){ renderDiagnostics(); });
+  if (window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ renderDiagnostics(); });
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

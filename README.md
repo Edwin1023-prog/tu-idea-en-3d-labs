@@ -1,10 +1,10 @@
 # Tu Idea en 3D — Laboratorios
 
-Tres páginas web independientes (HTML + CSS + JS, sin backend) del trabajo
-"Tu Idea en 3D: CRISP-DM y KPIs". Las tres permiten subir tus propios datos
+Cinco páginas web independientes (HTML + CSS + JS, sin backend) del trabajo
+"Tu Idea en 3D: CRISP-DM y KPIs". Las cinco permiten subir tus propios datos
 (CSV, TSV, JSON o Excel) y recalculan todo en el navegador, en vivo:
 
-- `index.html` — página de entrada con enlaces a las tres apps.
+- `index.html` — página de entrada con enlaces a las cinco apps.
 - `laboratorio-precios.html` — importar datos, limpieza, curva de demanda,
   utilidad y simulación de escenarios de precio.
 - `laboratorio-clustering.html` — importar datos, elegir variables y número
@@ -13,6 +13,15 @@ Tres páginas web independientes (HTML + CSS + JS, sin backend) del trabajo
 - `laboratorio-confusion.html` — importar un archivo (clase real/predicha,
   o una columna numérica para el ejercicio de regla) o elegir uno de los
   9 casos precargados; matriz 2×2 editable y métricas en vivo.
+- `laboratorio-regresion.html` — importar datos, elegir variable objetivo y
+  hasta 4 predictoras; regresión lineal múltiple por mínimos cuadrados
+  (coeficientes, pruebas t/F, VIF, diagnóstico de residuales) y un
+  simulador de escenarios "qué pasaría si" con intervalos de confianza.
+- `laboratorio-arboles.html` — importar datos, elegir qué predecir y con
+  qué variables; árbol de decisión (CART, impureza de Gini) con
+  profundidad y tamaño de hoja ajustables, matriz de confusión sobre un
+  30% de datos de prueba, importancia de variables y un simulador de
+  predicción con el camino completo por el árbol.
 
 No necesitan servidor ni build: son archivos estáticos, se abren tal cual
 en el navegador y también se pueden desplegar directo en Vercel, Netlify,
@@ -26,7 +35,7 @@ GitHub Pages o cualquier hosting estático.
    (no marques "Add a README", para que quede vacío).
 3. En la página del repo recién creado, haz clic en **"uploading an
    existing file"** (o en "Add file" → "Upload files").
-4. Arrastra los cuatro archivos de esta carpeta (los tres `.html` y el
+4. Arrastra los seis archivos de esta carpeta (los cinco `.html` y el
    `README.md`) a la ventana del navegador.
 5. Baja y haz clic en **"Commit changes"**.
 
@@ -37,7 +46,7 @@ pedir un cambio), no hace falta borrar nada: en la página del repositorio
 usa de nuevo **"Add file" → "Upload files"** y arrastra los archivos
 actualizados. Si un archivo ya existe con el mismo nombre, GitHub lo
 reemplaza automáticamente al hacer "Commit changes"; los que sean nuevos
-(como `laboratorio-clustering.html`) simplemente se agregan.
+(como `laboratorio-regresion.html` o `laboratorio-arboles.html`) simplemente se agregan.
 
 ## Desplegar en Vercel (importando desde GitHub)
 
@@ -49,7 +58,7 @@ reemplaza automáticamente al hacer "Commit changes"; los que sean nuevos
 4. Vercel detecta que es un sitio estático: no hay que tocar ningún
    ajuste de framework ni de build — deja todo como está.
 5. Haz clic en **"Deploy"**. En menos de un minuto te da una URL pública
-   con las tres apps en línea.
+   con las cinco apps en línea.
 
 Cada vez que subas un cambio nuevo al repositorio de GitHub (paso
 "Actualizar un repositorio que ya existe" arriba), Vercel vuelve a

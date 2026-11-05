@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio de Árboles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== Design plan =====
+   Layout: worksheet igual al resto de Laboratorios (topbar + pillnav + hero +
+   secciones numeradas por fase CRISP-DM).
+   Color: --bg/--surface/--ink neutrales cálidos (papel) + acento verde bosque
+          (el árbol / clase "Sí") y terracota (clase "No") — paleta propia,
+          distinta a las otras 4 apps.
+   Type: Spectral (display, serif con itálicas) / IBM Plex Sans (body) /
+         IBM Plex Mono (números).
+*/
+:root{
+  --bg:#f7f8f3; --surface:#ffffff; --surface-2:#eef1e6; --raised:#ffffff;
+  --ink:#1b2318; --ink-2:#555f4c; --muted:#8a9280;
+  --border:rgba(27,35,24,0.12); --grid:#e2e6d8;
+  --accent:#1f7a43; --accent-strong:#155c32; --accent-soft:#dff0e4; --accent-contrast:#f7fff9;
+  --clay:#b5542a; --clay-strong:#8a3f1e; --clay-soft:#fae3d6; --clay-contrast:#fff8f4;
+  --good:#1f7a43; --warn:#b5790a; --bad:#b5542a;
+  --font-display:'Spectral',Georgia,serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10140d; --surface:#181d13; --surface-2:#1f2617; --raised:#1c2216;
+    --ink:#eef1e6; --ink-2:#b8c0ac; --muted:#7d8572;
+    --border:rgba(255,255,255,0.12); --grid:#2a3220;
+    --accent:#4ade80; --accent-strong:#7cf0a8; --accent-soft:#163322; --accent-contrast:#06130a;
+    --clay:#e38656; --clay-strong:#f2a87c; --clay-soft:#3a2416; --clay-contrast:#1c0f06;
+    --good:#4ade80; --warn:#f0b429; --bad:#e38656;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10140d; --surface:#181d13; --surface-2:#1f2617; --raised:#1c2216;
+  --ink:#eef1e6; --ink-2:#b8c0ac; --muted:#7d8572;
+  --border:rgba(255,255,255,0.12); --grid:#2a3220;
+  --accent:#4ade80; --accent-strong:#7cf0a8; --accent-soft:#163322; --accent-contrast:#06130a;
+  --clay:#e38656; --clay-strong:#f2a87c; --clay-soft:#3a2416; --clay-contrast:#1c0f06;
+  --good:#4ade80; --warn:#f0b429; --bad:#e38656;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;}
+body{background:var(--bg); color:var(--ink); font-family:var(--font-body); margin:0; font-size:15px; line-height:1.55;
+     padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));}
+.shell{max-width:980px; margin:0 auto;}
+h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0; color:var(--ink);}
+h2{font-size:21px; font-weight:600;}
+h3{font-size:16px; font-weight:600;}
+p{margin:0;}
+em{font-style:italic; color:var(--accent-strong);}
+.mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:var(--accent);}
+::selection{background:var(--accent-soft); color:var(--ink);}
+
+.topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--bg); border-bottom:1px solid var(--border); margin:0 -16px;}
+.topbar-inner{max-width:980px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;}
+.brand{display:flex; align-items:baseline; gap:9px; min-width:0;}
+.brand-mark{width:10px; height:10px; border-radius:2px; background:var(--accent); flex:none;}
+.brand-name{font-weight:700; font-size:15px; letter-spacing:.01em;}
+.brand-sub{color:var(--muted); font-size:12.5px;}
+
+.pillnav{position:sticky; top:calc(env(safe-area-inset-top,0px) + 47px); z-index:29; background:var(--bg); border-bottom:1px solid var(--border); margin:0 -16px;}
+.pillnav-inner{max-width:980px; margin:0 auto; padding:9px 16px; display:flex; gap:7px; overflow-x:auto; scrollbar-width:none;}
+.pillnav-inner::-webkit-scrollbar{display:none;}
+.pill{flex:none; font-family:var(--font-mono); font-size:12px; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--ink-2); background:var(--surface); white-space:nowrap; cursor:pointer; text-decoration:none;}
+.pill:hover{border-color:var(--accent);}
+
+.hero{padding:30px 0 22px;}
+.eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); font-weight:600;}
+.hero h1{font-size:clamp(24px,4vw,32px); margin-top:6px; font-weight:700;}
+.hero p.lede{margin-top:10px; max-width:66ch; color:var(--ink-2); font-size:15px;}
+
+section.step{padding:34px 0; border-top:1px solid var(--border);}
+section.step:first-of-type{border-top:none;}
+.step-head{display:flex; gap:12px; align-items:flex-start; margin-bottom:16px;}
+.step-num{font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:700; background:var(--accent-soft); border-radius:7px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex:none;}
+.step-head h2{font-size:19px;}
+.step-head p{color:var(--ink-2); font-size:13.5px; margin-top:3px;}
+.step-phase{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); font-weight:700; margin:0 0 2px;}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; min-width:0;}
+.card + .card{margin-top:12px;}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+.grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+@media (max-width:720px){ .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;} }
+
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;}
+th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600;}
+tbody tr:hover{background:var(--surface-2);}
+.table-wrap{overflow-x:auto; border-radius:10px;}
+
+.btnrow{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+button{font-family:var(--font-body); font-size:13.5px; font-weight:600; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink); padding:9px 14px; cursor:pointer;}
+button:hover{border-color:var(--accent);}
+.checkrow{display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface); cursor:pointer; user-select:none;}
+.checkrow input{accent-color:var(--accent);}
+.checkrow.disabled{opacity:.4; cursor:not-allowed;}
+
+.note{font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border-radius:8px; padding:10px 12px; border:1px solid var(--border);}
+.note b{color:var(--ink);}
+.note.warn{color:var(--warn);}
+
+.dropzone{border:1.5px dashed var(--border); border-radius:12px; padding:22px; text-align:center; cursor:pointer; background:var(--surface);}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent); background:var(--accent-soft);}
+.dropzone input{display:none;}
+.dropzone .dz-title{font-weight:600; font-size:14px;}
+.dropzone .dz-sub{color:var(--muted); font-size:12.5px; margin-top:4px;}
+
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:12px; color:var(--ink-2); font-weight:500;}
+select,input[type=number]{font-family:var(--font-mono); font-size:13px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--raised); color:var(--ink); width:100%;}
+input[type=range]{width:100%; accent-color:var(--accent);}
+
+.metric{border-radius:12px; padding:14px 16px; border:1px solid var(--border); background:var(--surface); text-align:center;}
+.metric .val{font-family:var(--font-mono); font-size:26px; font-weight:600; color:var(--accent-strong);}
+.metric .lab{font-size:11.5px; color:var(--muted); margin-top:3px;}
+
+.chart-wrap{position:relative; height:200px; min-width:0;}
+canvas{display:block; width:100%; height:100%;}
+
+/* ---- tree diagram ---- */
+.tree{display:flex; justify-content:center; overflow-x:auto; padding:10px 4px 18px;}
+.tnode{display:flex; flex-direction:column; align-items:center; padding:0 10px; position:relative;}
+.tnode-box{border-radius:10px; padding:9px 12px; font-size:12px; text-align:center; border:1.5px solid var(--border); background:var(--surface); min-width:118px;}
+.tnode-box.split{background:var(--surface-2); font-family:var(--font-mono); font-weight:600;}
+.tnode-box.leaf{font-weight:600;}
+.tnode-box.leaf.cls-si{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-strong);}
+.tnode-box.leaf.cls-no{border-color:var(--clay); background:var(--clay-soft); color:var(--clay-strong);}
+.tnode-sub{font-size:10.5px; color:var(--muted); margin-top:3px; font-family:var(--font-mono);}
+.tchildren{display:flex; padding-top:18px; position:relative;}
+.tchildren::before{content:''; position:absolute; top:0; left:50%; width:1px; height:18px; background:var(--border);}
+.tnode > .tchildren .tnode::before{content:''; position:absolute; top:-18px; left:50%; width:50%; height:1px; background:var(--border); transform:translateX(-50%);}
+.tnode > .tchildren .tnode:first-child::before{left:100%; width:50%;}
+.tnode > .tchildren .tnode:last-child::before{left:0; width:50%;}
+.edge-label{position:absolute; top:-15px; font-size:9.5px; font-family:var(--font-mono); color:var(--muted); background:var(--bg); padding:0 4px;}
+
+.leafcard{border-radius:12px; padding:14px 16px; border:1px solid var(--border); background:var(--surface);}
+.leafcard h3{font-size:14px; margin-bottom:6px;}
+.leafcard .lc-rate{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--accent-strong);}
+.leafcard .lc-rule{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); margin-top:4px;}
+.leafcard p.body{font-size:13px; color:var(--ink-2); margin-top:8px; line-height:1.5;}
+
+.predictbox{border-radius:14px; padding:20px; border:1px solid var(--border); text-align:center;}
+.predictbox.cls-si{background:linear-gradient(135deg, var(--accent-soft), var(--surface));}
+.predictbox.cls-no{background:linear-gradient(135deg, var(--clay-soft), var(--surface));}
+.predictbox .pv{font-family:var(--font-mono); font-size:30px; font-weight:700;}
+.predictbox.cls-si .pv{color:var(--accent-strong);}
+.predictbox.cls-no .pv{color:var(--clay-strong);}
+.predictbox .pl{font-size:12.5px; color:var(--ink-2); margin-top:4px;}
+.pathlist{list-style:none; margin:10px 0 0; padding:0; text-align:left; font-size:12px; font-family:var(--font-mono); color:var(--ink-2);}
+.pathlist li{padding:4px 0; border-bottom:1px dashed var(--border);}
+.pathlist li:last-child{border-bottom:none;}
+
+footer{padding:30px 0 50px; border-top:1px solid var(--border); margin-top:10px;}
+footer p{color:var(--muted); font-size:12.5px; max-width:70ch;}
+footer p + p{margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Laboratorio de Árboles</span>
+      <span class="brand-sub">&nbsp;· Tu Idea en 3D</span>
+    </div>
+    <span class="mono" style="font-size:11.5px;color:var(--muted);" id="rowCountNote">220 filas</span>
+  </div>
+</div>
+<div class="pillnav">
+  <div class="pillnav-inner">
+    <a class="pill" href="#s1">1 · Importar</a>
+    <a class="pill" href="#s2">2 · Variables</a>
+    <a class="pill" href="#s3">3 · El árbol</a>
+    <a class="pill" href="#s4">4 · Evaluación</a>
+    <a class="pill" href="#s5">5 · Importancia</a>
+    <a class="pill" href="#s6">6 · Simulador</a>
+    <a class="pill" href="#s7">7 · Segmentos</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="hero">
+    <div class="eyebrow">Árboles de clasificación · CART · metodología CRISP-DM</div>
+    <h1>Qué perfil de consulta tiene más probabilidad de convertir</h1>
+    <p class="lede">Importa tu propia tabla (o usa las consultas simuladas de Tu Idea en 3D, ya cargadas), elige qué quieres predecir y con qué variables, y un árbol de decisión (CART, impureza de Gini) se construye <em>en vivo, en tu navegador</em> — con su matriz de confusión y un simulador de predicción.</p>
+  </div>
+
+  <!-- ===== 1 · IMPORTAR ===== -->
+  <section class="step" id="s1">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Importar la base de datos</h2>
+        <p>Cualquier archivo de datos tabulares: CSV, TSV, JSON, Excel u OpenDocument. Ya vienen cargadas 220 consultas simuladas de Tu Idea en 3D — puedes reemplazarlas por las tuyas.</p>
+      </div>
+    </div>
+    <div class="card">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,.xlsm,.ods">
+        <div class="dz-title">Arrastra un archivo o haz clic para elegirlo</div>
+        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods</div>
+      </label>
+      <div id="fileStatus" class="note" style="margin-top:12px;"></div>
+      <div class="btnrow" style="margin-top:10px;">
+        <button type="button" id="btnRestore">Restaurar consultas de ejemplo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2 · VARIABLES ===== -->
+  <section class="step" id="s2">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Primeras filas, variable a predecir y partición</h2>
+        <p>Elige la variable <b>categórica</b> que quieres predecir (hasta 6 clases) y hasta 4 variables predictoras. El 30% de las filas se separa al azar como prueba, para evaluar el árbol de forma honesta.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="headTable"></table></div>
+      <p class="note" id="shapeNote" style="margin-top:10px;"></p>
+    </div>
+    <div class="card">
+      <div class="grid-2">
+        <div class="field">
+          <label>Variable a predecir (clase objetivo)</label>
+          <select id="targetSelect"></select>
+        </div>
+        <div class="field">
+          <label>Variables predictoras (marca hasta 4)</label>
+          <div id="featChecks" style="display:flex; flex-direction:column; gap:7px; margin-top:2px;"></div>
+        </div>
+      </div>
+      <p class="note" id="varNote" style="margin-top:10px;"></p>
+    </div>
+    <div class="card">
+      <div class="grid-2">
+        <div class="field">
+          <label>Profundidad máxima del árbol: <b id="depthVal"></b></label>
+          <input type="range" id="depthSlider" min="2" max="6" step="1">
+        </div>
+        <div class="field">
+          <label>Tamaño mínimo de hoja: <b id="minleafVal"></b></label>
+          <input type="range" id="minleafSlider" min="5" max="40" step="5">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3 · EL ÁRBOL ===== -->
+  <section class="step" id="s3">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
+        <h2>El árbol de decisión</h2>
+        <p>Cada división busca el corte que más reduce la impureza de Gini. Las variables de texto se dividen "es esta categoría" vs. "las demás" (una forma simplificada de cómo CART maneja categóricas).</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tree" id="treeHost"></div>
+    </div>
+  </section>
+
+  <!-- ===== 4 · EVALUACIÓN ===== -->
+  <section class="step" id="s4">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 5 &middot; Evaluación</p>
+        <h2>Matriz de confusión (sobre el 30% de prueba)</h2>
+        <p>El árbol se entrena sólo con el 70% de las filas; estas métricas se calculan sobre el 30% restante, que el árbol nunca vio.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="table-wrap"><table id="confTable"></table></div>
+      </div>
+      <div class="card">
+        <div class="grid-2" id="metricCards" style="height:100%;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5 · IMPORTANCIA ===== -->
+  <section class="step" id="s5">
+    <div class="step-head">
+      <div class="step-num">5</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 5 &middot; Evaluación</p>
+        <h2>Importancia de las variables</h2>
+        <p>Cuánto reduce cada variable la impureza de Gini en total, ponderado por el tamaño de los nodos donde se usó &mdash; más alto, más peso tuvo en el árbol.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chart-wrap" id="importanceChartWrap"><canvas id="chartImportance"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ===== 6 · SIMULADOR ===== -->
+  <section class="step" id="s6">
+    <div class="step-head">
+      <div class="step-num">6</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
+        <h2>Simulador &mdash; clasifica una consulta nueva</h2>
+        <p>Describe una consulta hipotética y el árbol recorre sus nodos hasta llegar a una hoja, mostrando el camino completo.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card" id="simHost"></div>
+      <div id="predictHost"></div>
+    </div>
+  </section>
+
+  <!-- ===== 7 · SEGMENTOS ===== -->
+  <section class="step" id="s7">
+    <div class="step-head">
+      <div class="step-num">7</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
+        <h2>Segmentos de negocio en las hojas</h2>
+        <p>Las hojas más grandes y más "puras" del árbol, traducidas a texto de negocio.</p>
+      </div>
+    </div>
+    <div class="grid-2" id="segHost"></div>
+  </section>
+
+  <footer>
+    <p><b>Honestidad metodológica:</b> este árbol corre completo en tu navegador con un CART simplificado (impureza de Gini, división binaria, categóricas por "una categoría contra el resto"). No es idéntico a <code>rpart</code> de R ni a <code>scikit-learn</code> de Python &mdash; ambos manejan categóricas y la poda de forma algo distinta &mdash; pero la lógica de fondo (buscar el corte que más reduce la impureza) es la misma. Las consultas precargadas son una simulación de la actividad de Tu Idea en 3D; con tus propios datos, reemplázalas en el paso 1 y todo se recalcula solo.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============== THEME ============== */
+  function currentTheme(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark' || t === 'light') return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  var PAL = {
+    light:{ text:'#1b2318', text2:'#555f4c', muted:'#8a9280', grid:'#e2e6d8', bar:'#1f7a43' },
+    dark:{ text:'#eef1e6', text2:'#b8c0ac', muted:'#7d8572', grid:'#2a3220', bar:'#4ade80' }
+  };
+  function pal(){ return PAL[currentTheme()]; }
+
+  /* ============== SEEDED RNG (mulberry32) ============== */
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function seededShuffle(arr, seed){
+    var rng = mulberry32(seed);
+    var a = arr.slice();
+    for (var i=a.length-1;i>0;i--){ var j=Math.floor(rng()*(i+1)); var tmp=a[i]; a[i]=a[j]; a[j]=tmp; }
+    return a;
+  }
+
+  /* ============== CART ENGINE ============== */
+  function classCounts(rows, targetCol){
+    var counts = {};
+    rows.forEach(function(r){ var v=r[targetCol]; counts[v]=(counts[v]||0)+1; });
+    return counts;
+  }
+  function giniImpurity(counts, n){
+    var s=0; Object.keys(counts).forEach(function(k){ var p=counts[k]/n; s+=p*p; });
+    return 1-s;
+  }
+  function majorityClass(counts){
+    var best=null, bestC=-1;
+    Object.keys(counts).forEach(function(k){ if (counts[k]>bestC){ bestC=counts[k]; best=k; } });
+    return best;
+  }
+  function buildTree(rows, features, targetCol, opts, depth, importance){
+    depth = depth||0;
+    var maxDepth = opts.maxDepth, minLeaf = opts.minLeaf;
+    var n = rows.length;
+    var counts = classCounts(rows, targetCol);
+    var g = giniImpurity(counts, n);
+    var node = { n:n, counts:counts, gini:g, majority:majorityClass(counts), depth:depth, isLeaf:true };
+    if (depth>=maxDepth || n < 2*minLeaf || g===0) return node;
+    var best = null;
+    features.forEach(function(feat){
+      if (feat.type === 'numeric'){
+        var vals = rows.map(function(r){ return r[feat.name]; }).filter(function(v){ return v!=null && isFinite(v); });
+        var uniq = Array.from(new Set(vals)).sort(function(a,b){ return a-b; });
+        for (var i=0;i<uniq.length-1;i++){
+          var thr = (uniq[i]+uniq[i+1])/2;
+          var left=[], right=[];
+          rows.forEach(function(r){ (r[feat.name]<=thr ? left : right).push(r); });
+          if (left.length<minLeaf || right.length<minLeaf) continue;
+          var gl = giniImpurity(classCounts(left,targetCol), left.length);
+          var gr = giniImpurity(classCounts(right,targetCol), right.length);
+          var gw = (left.length/n)*gl + (right.length/n)*gr;
+          if (!best || gw < best.giniWeighted) best = {feature:feat.name, type:'numeric', threshold:thr, giniWeighted:gw, leftRows:left, rightRows:right};
+        }
+      } else {
+        var cats = Array.from(new Set(rows.map(function(r){ return r[feat.name]; })));
+        cats.forEach(function(cat){
+          var left=[], right=[];
+          rows.forEach(function(r){ (r[feat.name]===cat ? left : right).push(r); });
+          if (left.length<minLeaf || right.length<minLeaf) return;
+          var gl = giniImpurity(classCounts(left,targetCol), left.length);
+          var gr = giniImpurity(classCounts(right,targetCol), right.length);
+          var gw = (left.length/n)*gl + (right.length/n)*gr;
+          if (!best || gw < best.giniWeighted) best = {feature:feat.name, type:'categorical', value:cat, giniWeighted:gw, leftRows:left, rightRows:right};
+        });
+      }
+    });
+    if (!best) return node;
+    node.isLeaf = false;
+    node.split = { feature:best.feature, type:best.type, threshold:best.threshold, value:best.value };
+    var decrease = g - best.giniWeighted;
+    if (importance) importance[best.feature] = (importance[best.feature]||0) + decrease*(n/opts.totalN);
+    node.left = buildTree(best.leftRows, features, targetCol, opts, depth+1, importance);
+    node.right = buildTree(best.rightRows, features, targetCol, opts, depth+1, importance);
+    return node;
+  }
+  function predictNode(node, row){
+    var path = [];
+    while (!node.isLeaf){
+      var s = node.split;
+      var goLeft;
+      var cond;
+      if (s.type==='numeric'){ goLeft = row[s.feature] <= s.threshold; cond = s.feature+' ≤ '+fmtNum(s.threshold,1); }
+      else { goLeft = row[s.feature] === s.value; cond = s.feature+' = "'+s.value+'"'; }
+      path.push({cond:cond, taken: goLeft});
+      node = goLeft ? node.left : node.right;
+    }
+    return {node:node, path:path};
+  }
+
+  function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&lt;','<':'&lt;','>':'&gt;'}[c]||c; }); }
+  function fmtNum(v,d){ if (v==null||isNaN(v)) return '—'; return Number(v).toLocaleString('es-CO',{maximumFractionDigits:d==null?2:d}); }
+
+  /* ============== EMBEDDED DEFAULT DATA ============== */
+  var EMBEDDED = [{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":114000,"tiempo_respuesta_horas":0.2,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":97000,"tiempo_respuesta_horas":2.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":135000,"tiempo_respuesta_horas":13.8,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Jabones","precio_cotizado":70000,"tiempo_respuesta_horas":3.5,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":181000,"tiempo_respuesta_horas":0.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":73000,"tiempo_respuesta_horas":0.4,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":94000,"tiempo_respuesta_horas":2.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":74000,"tiempo_respuesta_horas":4.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":55000,"tiempo_respuesta_horas":1.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":88000,"tiempo_respuesta_horas":3.9,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":251000,"tiempo_respuesta_horas":2.5,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":112000,"tiempo_respuesta_horas":1.3,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":285000,"tiempo_respuesta_horas":4.4,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":144000,"tiempo_respuesta_horas":4.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":88000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":147000,"tiempo_respuesta_horas":11.1,"consultas_previas_cliente":3,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":71000,"tiempo_respuesta_horas":7.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":116000,"tiempo_respuesta_horas":9.0,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":208000,"tiempo_respuesta_horas":4.5,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":222000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":85000,"tiempo_respuesta_horas":6.6,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":137000,"tiempo_respuesta_horas":3.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Velas","precio_cotizado":91000,"tiempo_respuesta_horas":1.6,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":69000,"tiempo_respuesta_horas":8.3,"consultas_previas_cliente":3,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":121000,"tiempo_respuesta_horas":4.0,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":247000,"tiempo_respuesta_horas":9.9,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":85000,"tiempo_respuesta_horas":9.0,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":73000,"tiempo_respuesta_horas":10.0,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":267000,"tiempo_respuesta_horas":1.3,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"TikTok","categoria":"Decoración","precio_cotizado":157000,"tiempo_respuesta_horas":6.6,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":94000,"tiempo_respuesta_horas":1.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":197000,"tiempo_respuesta_horas":2.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":82000,"tiempo_respuesta_horas":8.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":272000,"tiempo_respuesta_horas":3.0,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":276000,"tiempo_respuesta_horas":1.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Decoración","precio_cotizado":161000,"tiempo_respuesta_horas":1.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":132000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Jabones","precio_cotizado":58000,"tiempo_respuesta_horas":1.8,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":137000,"tiempo_respuesta_horas":3.9,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Repostería","precio_cotizado":129000,"tiempo_respuesta_horas":2.0,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":78000,"tiempo_respuesta_horas":7.6,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":84000,"tiempo_respuesta_horas":3.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":162000,"tiempo_respuesta_horas":5.1,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":85000,"tiempo_respuesta_horas":1.9,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":84000,"tiempo_respuesta_horas":4.1,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":112000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":145000,"tiempo_respuesta_horas":4.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":165000,"tiempo_respuesta_horas":3.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":96000,"tiempo_respuesta_horas":4.5,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Repostería","precio_cotizado":125000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":79000,"tiempo_respuesta_horas":3.5,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":70000,"tiempo_respuesta_horas":7.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":94000,"tiempo_respuesta_horas":6.6,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":109000,"tiempo_respuesta_horas":1.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":124000,"tiempo_respuesta_horas":2.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":108000,"tiempo_respuesta_horas":4.4,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":62000,"tiempo_respuesta_horas":4.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":54000,"tiempo_respuesta_horas":0.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":199000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Mascotas y regalos","precio_cotizado":92000,"tiempo_respuesta_horas":3.0,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":81000,"tiempo_respuesta_horas":10.8,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":60000,"tiempo_respuesta_horas":0.6,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Decoración","precio_cotizado":161000,"tiempo_respuesta_horas":5.1,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":103000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":226000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":85000,"tiempo_respuesta_horas":3.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":69000,"tiempo_respuesta_horas":5.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":86000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":64000,"tiempo_respuesta_horas":2.7,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":70000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":107000,"tiempo_respuesta_horas":1.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":94000,"tiempo_respuesta_horas":4.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":294000,"tiempo_respuesta_horas":1.0,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":70000,"tiempo_respuesta_horas":2.2,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":80000,"tiempo_respuesta_horas":2.9,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":149000,"tiempo_respuesta_horas":5.7,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":72000,"tiempo_respuesta_horas":1.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":110000,"tiempo_respuesta_horas":1.2,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":109000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":82000,"tiempo_respuesta_horas":7.7,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":88000,"tiempo_respuesta_horas":11.2,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":60000,"tiempo_respuesta_horas":2.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":227000,"tiempo_respuesta_horas":4.2,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":114000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":90000,"tiempo_respuesta_horas":3.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":236000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":228000,"tiempo_respuesta_horas":2.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Jabones","precio_cotizado":60000,"tiempo_respuesta_horas":5.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":70000,"tiempo_respuesta_horas":0.6,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":111000,"tiempo_respuesta_horas":7.9,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":84000,"tiempo_respuesta_horas":4.4,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":218000,"tiempo_respuesta_horas":3.5,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":98000,"tiempo_respuesta_horas":1.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":94000,"tiempo_respuesta_horas":3.0,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":62000,"tiempo_respuesta_horas":3.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":109000,"tiempo_respuesta_horas":2.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":72000,"tiempo_respuesta_horas":3.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Jabones","precio_cotizado":57000,"tiempo_respuesta_horas":4.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":173000,"tiempo_respuesta_horas":1.7,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":270000,"tiempo_respuesta_horas":0.9,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Decoración","precio_cotizado":178000,"tiempo_respuesta_horas":4.8,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":77000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":88000,"tiempo_respuesta_horas":2.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":73000,"tiempo_respuesta_horas":1.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":294000,"tiempo_respuesta_horas":2.9,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":155000,"tiempo_respuesta_horas":4.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":67000,"tiempo_respuesta_horas":0.9,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":113000,"tiempo_respuesta_horas":1.5,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":114000,"tiempo_respuesta_horas":1.6,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":96000,"tiempo_respuesta_horas":2.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":64000,"tiempo_respuesta_horas":1.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":72000,"tiempo_respuesta_horas":5.5,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":127000,"tiempo_respuesta_horas":3.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":107000,"tiempo_respuesta_horas":3.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":164000,"tiempo_respuesta_horas":2.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Piezas especiales","precio_cotizado":270000,"tiempo_respuesta_horas":1.7,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Decoración","precio_cotizado":192000,"tiempo_respuesta_horas":8.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":75000,"tiempo_respuesta_horas":7.0,"consultas_previas_cliente":3,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":53000,"tiempo_respuesta_horas":9.9,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":272000,"tiempo_respuesta_horas":1.2,"consultas_previas_cliente":2,"Convierte":"No"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":238000,"tiempo_respuesta_horas":6.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":282000,"tiempo_respuesta_horas":4.2,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":92000,"tiempo_respuesta_horas":5.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":147000,"tiempo_respuesta_horas":1.9,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":72000,"tiempo_respuesta_horas":3.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":99000,"tiempo_respuesta_horas":2.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":73000,"tiempo_respuesta_horas":6.2,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":277000,"tiempo_respuesta_horas":2.4,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":231000,"tiempo_respuesta_horas":3.3,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":236000,"tiempo_respuesta_horas":3.6,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":120000,"tiempo_respuesta_horas":0.3,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Decoración","precio_cotizado":181000,"tiempo_respuesta_horas":3.4,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":55000,"tiempo_respuesta_horas":5.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":110000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":68000,"tiempo_respuesta_horas":1.3,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":105000,"tiempo_respuesta_horas":9.2,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":61000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":277000,"tiempo_respuesta_horas":0.4,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":87000,"tiempo_respuesta_horas":2.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":115000,"tiempo_respuesta_horas":6.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Repostería","precio_cotizado":110000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":176000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":97000,"tiempo_respuesta_horas":2.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":108000,"tiempo_respuesta_horas":2.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":112000,"tiempo_respuesta_horas":3.0,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":185000,"tiempo_respuesta_horas":9.7,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Decoración","precio_cotizado":167000,"tiempo_respuesta_horas":5.0,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":91000,"tiempo_respuesta_horas":7.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Jabones","precio_cotizado":66000,"tiempo_respuesta_horas":5.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":108000,"tiempo_respuesta_horas":1.0,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":58000,"tiempo_respuesta_horas":3.4,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":83000,"tiempo_respuesta_horas":5.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":142000,"tiempo_respuesta_horas":0.5,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":141000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":87000,"tiempo_respuesta_horas":13.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Decoración","precio_cotizado":160000,"tiempo_respuesta_horas":3.6,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":193000,"tiempo_respuesta_horas":1.9,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":90000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":157000,"tiempo_respuesta_horas":3.1,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":85000,"tiempo_respuesta_horas":0.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":110000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Repostería","precio_cotizado":125000,"tiempo_respuesta_horas":5.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":228000,"tiempo_respuesta_horas":1.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":91000,"tiempo_respuesta_horas":3.7,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":146000,"tiempo_respuesta_horas":7.9,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":174000,"tiempo_respuesta_horas":2.2,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":103000,"tiempo_respuesta_horas":3.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":70000,"tiempo_respuesta_horas":2.8,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":72000,"tiempo_respuesta_horas":3.9,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":80000,"tiempo_respuesta_horas":4.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":144000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":192000,"tiempo_respuesta_horas":16.8,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":86000,"tiempo_respuesta_horas":8.4,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":85000,"tiempo_respuesta_horas":1.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":123000,"tiempo_respuesta_horas":2.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":100000,"tiempo_respuesta_horas":6.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Piezas especiales","precio_cotizado":277000,"tiempo_respuesta_horas":4.9,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":126000,"tiempo_respuesta_horas":2.2,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Jabones","precio_cotizado":67000,"tiempo_respuesta_horas":1.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":108000,"tiempo_respuesta_horas":10.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":64000,"tiempo_respuesta_horas":5.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":241000,"tiempo_respuesta_horas":7.9,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Repostería","precio_cotizado":136000,"tiempo_respuesta_horas":5.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":133000,"tiempo_respuesta_horas":1.2,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":75000,"tiempo_respuesta_horas":2.5,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":64000,"tiempo_respuesta_horas":1.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":71000,"tiempo_respuesta_horas":4.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":100000,"tiempo_respuesta_horas":2.2,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":75000,"tiempo_respuesta_horas":4.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":261000,"tiempo_respuesta_horas":5.0,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":96000,"tiempo_respuesta_horas":6.7,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Piezas especiales","precio_cotizado":248000,"tiempo_respuesta_horas":4.5,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":73000,"tiempo_respuesta_horas":8.6,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":70000,"tiempo_respuesta_horas":0.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Jabones","precio_cotizado":63000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":119000,"tiempo_respuesta_horas":2.7,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":172000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":230000,"tiempo_respuesta_horas":2.6,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":60000,"tiempo_respuesta_horas":3.0,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Velas","precio_cotizado":90000,"tiempo_respuesta_horas":1.8,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":259000,"tiempo_respuesta_horas":1.4,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":93000,"tiempo_respuesta_horas":6.4,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":115000,"tiempo_respuesta_horas":0.3,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":91000,"tiempo_respuesta_horas":4.2,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":84000,"tiempo_respuesta_horas":2.1,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"TikTok","categoria":"Repostería","precio_cotizado":112000,"tiempo_respuesta_horas":3.0,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":68000,"tiempo_respuesta_horas":4.7,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Tienda Shopify","categoria":"Mascotas y regalos","precio_cotizado":90000,"tiempo_respuesta_horas":10.3,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"TikTok","categoria":"Mascotas y regalos","precio_cotizado":101000,"tiempo_respuesta_horas":3.2,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Instagram","categoria":"Velas","precio_cotizado":73000,"tiempo_respuesta_horas":2.5,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Jabones","precio_cotizado":66000,"tiempo_respuesta_horas":2.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Decoración","precio_cotizado":195000,"tiempo_respuesta_horas":5.7,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"Tienda Shopify","categoria":"Decoración","precio_cotizado":178000,"tiempo_respuesta_horas":6.8,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Piezas especiales","precio_cotizado":256000,"tiempo_respuesta_horas":8.7,"consultas_previas_cliente":1,"Convierte":"No"},{"canal":"Instagram","categoria":"Mascotas y regalos","precio_cotizado":87000,"tiempo_respuesta_horas":1.5,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Decoración","precio_cotizado":206000,"tiempo_respuesta_horas":5.9,"consultas_previas_cliente":0,"Convierte":"No"},{"canal":"WhatsApp Business","categoria":"Jabones","precio_cotizado":56000,"tiempo_respuesta_horas":1.1,"consultas_previas_cliente":1,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Mascotas y regalos","precio_cotizado":105000,"tiempo_respuesta_horas":0.8,"consultas_previas_cliente":2,"Convierte":"Sí"},{"canal":"Instagram","categoria":"Repostería","precio_cotizado":115000,"tiempo_respuesta_horas":5.4,"consultas_previas_cliente":0,"Convierte":"Sí"},{"canal":"WhatsApp Business","categoria":"Velas","precio_cotizado":85000,"tiempo_respuesta_horas":6.3,"consultas_previas_cliente":2,"Convierte":"Sí"}];
+
+  /* ============== STATE ============== */
+  var state = {
+    rows: EMBEDDED.slice(),
+    columns: ['canal','categoria','precio_cotizado','tiempo_respuesta_horas','consultas_previas_cliente','Convierte'],
+    allCols: {},
+    targetCol: 'Convierte',
+    featCols: ['canal','precio_cotizado','tiempo_respuesta_horas','consultas_previas_cliente'],
+    maxDepth: 4,
+    minLeaf: 20,
+    tree: null, importance: {}, train: [], test: [],
+    simVals: {}
+  };
+
+  /* ============== COLUMN DETECTION ============== */
+  function detectColumns(rows){
+    var cols = Object.keys(rows[0] || {});
+    var info = {};
+    cols.forEach(function(c){
+      var vals = rows.map(function(r){ return r[c]; }).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+      var numCount = vals.filter(function(v){ return (typeof v === 'number' && isFinite(v)) || (typeof v==='string' && v.trim()!=='' && isFinite(Number(v))); }).length;
+      var isNumeric = vals.length && numCount/vals.length >= 0.9;
+      var distinct = new Set(vals.map(String)).size;
+      info[c] = { type: isNumeric?'numeric':'categorical', distinct: distinct };
+    });
+    return { cols:cols, info:info };
+  }
+
+  /* ============== PARSING ============== */
+  function onParsed(rows, filename){
+    rows = (rows||[]).filter(function(r){ return r && Object.keys(r).length; });
+    if (!rows.length){ showStatus('El archivo "'+filename+'" no tiene filas reconocibles.', true); return; }
+    var det = detectColumns(rows);
+    var catTargets = det.cols.filter(function(c){ return det.info[c].type==='categorical' && det.info[c].distinct>=2 && det.info[c].distinct<=6; });
+    if (!catTargets.length){ showStatus('El archivo "'+filename+'" necesita al menos una columna de texto con 2 a 6 categorías distintas para usar como variable a predecir.', true); return; }
+    // normalize numeric strings to numbers
+    rows.forEach(function(r){
+      det.cols.forEach(function(c){
+        if (det.info[c].type==='numeric' && r[c]!=null && r[c]!=='') r[c] = parseFloat(r[c]);
+      });
+    });
+    state.rows = rows;
+    state.columns = det.cols;
+    state.allCols = det.info;
+    state.targetCol = catTargets[0];
+    state.featCols = det.cols.filter(function(c){ return c!==state.targetCol; }).slice(0,4);
+    state.simVals = {};
+    showStatus(rows.length + ' filas cargadas de "'+filename+'" · '+catTargets.length+' columna(s) categórica(s) elegibles como objetivo.', false);
+    renderAll();
+  }
+  function showStatus(msg, isWarn){
+    var el = document.getElementById('fileStatus');
+    el.textContent = msg;
+    el.className = 'note' + (isWarn ? ' warn' : '');
+  }
+  function parseFile(file){
+    var name = file.name || 'archivo';
+    var ext = (name.split('.').pop()||'').toLowerCase();
+    if (ext === 'json'){
+      var r1 = new FileReader();
+      r1.onload = function(e){ try{ var data = JSON.parse(e.target.result); onParsed(Array.isArray(data)?data:(data.rows||data.data||[]), name); } catch(err){ showStatus('No se pudo leer el JSON: '+err.message, true); } };
+      r1.readAsText(file);
+    } else if (['xlsx','xls','xlsm','ods'].indexOf(ext) !== -1){
+      var r2 = new FileReader();
+      r2.onload = function(e){ try{ var wb=XLSX.read(e.target.result,{type:'array'}); var sheet=wb.Sheets[wb.SheetNames[0]]; onParsed(XLSX.utils.sheet_to_json(sheet,{defval:null}), name); } catch(err){ showStatus('No se pudo leer el archivo: '+err.message, true); } };
+      r2.readAsArrayBuffer(file);
+    } else {
+      Papa.parse(file, { header:true, dynamicTyping:true, skipEmptyLines:true, complete:function(res){ onParsed(res.data, name); }, error:function(err){ showStatus('No se pudo leer el archivo: '+err.message, true); } });
+    }
+  }
+
+  /* ============== RENDER: HEAD TABLE ============== */
+  function renderHead(){
+    var cols = state.columns;
+    var rows = state.rows.slice(0,5);
+    var html = '<thead><tr>' + cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('') + '</tr></thead><tbody>';
+    rows.forEach(function(r){
+      html += '<tr>' + cols.map(function(c){
+        var v = r[c];
+        if (typeof v === 'number') v = fmtNum(v, 2);
+        return '<td>'+ (v===undefined||v===null||v===''?'<span style="color:var(--muted)">&mdash;</span>':esc(v)) +'</td>';
+      }).join('') + '</tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('headTable').innerHTML = html;
+    document.getElementById('shapeNote').innerHTML = '<b>'+state.rows.length+'</b> filas &times; <b>'+cols.length+'</b> columnas.';
+    document.getElementById('rowCountNote').textContent = state.rows.length + ' filas';
+  }
+
+  /* ============== VARIABLE PICKERS ============== */
+  function allTypeInfo(){
+    if (Object.keys(state.allCols).length) return state.allCols;
+    return detectColumns(state.rows).info;
+  }
+  function renderVarPickers(){
+    var info = allTypeInfo();
+    state.allCols = info;
+    var catTargets = state.columns.filter(function(c){ return info[c] && info[c].type==='categorical' && info[c].distinct>=2 && info[c].distinct<=6; });
+    var tSel = document.getElementById('targetSelect');
+    tSel.innerHTML = catTargets.map(function(c){ return '<option value="'+esc(c)+'"'+(c===state.targetCol?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
+    tSel.onchange = function(){
+      state.targetCol = tSel.value;
+      state.featCols = state.featCols.filter(function(c){ return c!==state.targetCol; });
+      state.simVals = {};
+      renderAll();
+    };
+
+    var host = document.getElementById('featChecks');
+    var avail = state.columns.filter(function(c){ return c!==state.targetCol; });
+    host.innerHTML = avail.map(function(c){
+      var checked = state.featCols.indexOf(c) !== -1;
+      var disableNew = (!checked && state.featCols.length>=4);
+      var tlabel = info[c] ? (info[c].type==='numeric'?'num':'cat') : '';
+      return '<label class="checkrow'+(disableNew?' disabled':'')+'"><input type="checkbox" data-col="'+esc(c)+'" '+(checked?'checked':'')+(disableNew?' disabled':'')+'> <span class="mono" style="font-size:12.5px;">'+esc(c)+' <span style="color:var(--muted)">('+tlabel+')</span></span></label>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('input[type=checkbox]'), function(cb){
+      cb.addEventListener('change', function(){
+        var c = cb.getAttribute('data-col');
+        if (cb.checked){ if (state.featCols.length<4) state.featCols.push(c); else { cb.checked=false; return; } }
+        else { state.featCols = state.featCols.filter(function(x){ return x!==c; }); delete state.simVals[c]; }
+        renderAll();
+      });
+    });
+
+    var note = document.getElementById('varNote');
+    if (state.featCols.length === 0) note.innerHTML = 'Elige al menos una variable predictora.';
+    else note.innerHTML = 'Árbol: <b>'+esc(state.targetCol)+' ~ '+state.featCols.map(esc).join(' + ')+'</b>';
+
+    document.getElementById('depthVal').textContent = state.maxDepth;
+    document.getElementById('minleafVal').textContent = state.minLeaf;
+    var depthSlider = document.getElementById('depthSlider'), minleafSlider = document.getElementById('minleafSlider');
+    depthSlider.value = state.maxDepth; minleafSlider.value = state.minLeaf;
+    depthSlider.oninput = function(){ state.maxDepth = +depthSlider.value; document.getElementById('depthVal').textContent=state.maxDepth; rebuildAndRenderModel(); };
+    minleafSlider.oninput = function(){ state.minLeaf = +minleafSlider.value; document.getElementById('minleafVal').textContent=state.minLeaf; rebuildAndRenderModel(); };
+  }
+
+  /* ============== BUILD MODEL ============== */
+  function rebuildModel(){
+    var info = state.allCols;
+    if (state.featCols.length===0){ state.tree=null; return; }
+    var validRows = state.rows.filter(function(r){
+      if (r[state.targetCol]==null || r[state.targetCol]==='') return false;
+      return state.featCols.every(function(c){
+        var v = r[c];
+        if (info[c] && info[c].type==='numeric') return v!=null && isFinite(v);
+        return v!=null && v!=='';
+      });
+    });
+    if (validRows.length < (2*state.minLeaf)){ state.tree=null; state.insufficientData=true; return; }
+    state.insufficientData=false;
+    var shuffled = seededShuffle(validRows, 16);
+    var nTest = Math.max(1, Math.round(shuffled.length*0.3));
+    state.test = shuffled.slice(0, nTest);
+    state.train = shuffled.slice(nTest);
+    var features = state.featCols.map(function(c){ return {name:c, type: info[c] ? info[c].type : 'categorical'}; });
+    var importance = {};
+    var opts = {maxDepth: state.maxDepth, minLeaf: state.minLeaf, totalN: state.train.length};
+    state.tree = buildTree(state.train, features, state.targetCol, opts, 0, importance);
+    state.importance = importance;
+  }
+  function rebuildAndRenderModel(){
+    rebuildModel();
+    renderTree(); renderConfusion(); renderImportance(); renderSimForm(); renderPrediction(); renderSegments();
+  }
+
+  /* ============== TREE RENDER ============== */
+  function classOfLeaf(node){
+    // heuristically map to "cls-si"/"cls-no" styling if 2-class "Sí"/"No"-like target; else neutral
+    var m = String(node.majority);
+    if (/^s[ií]$/i.test(m) || /^yes$/i.test(m) || /^1$/.test(m)) return 'cls-si';
+    if (/^no$/i.test(m) || /^0$/.test(m)) return 'cls-no';
+    return '';
+  }
+  function renderTreeNode(node, edgeLabel){
+    var wrap = document.createElement('div');
+    wrap.className = 'tnode';
+    if (edgeLabel) { var el = document.createElement('div'); el.className='edge-label'; el.textContent = edgeLabel; wrap.appendChild(el); }
+    var box = document.createElement('div');
+    if (node.isLeaf){
+      box.className = 'tnode-box leaf ' + classOfLeaf(node);
+      box.innerHTML = esc(node.majority) + '<div class="tnode-sub">n='+node.n+' · gini='+node.gini.toFixed(2)+'</div>';
+    } else {
+      box.className = 'tnode-box split';
+      var label = node.split.type==='numeric' ? (node.split.feature+' ≤ '+fmtNum(node.split.threshold,1)) : (node.split.feature+' = '+node.split.value);
+      box.innerHTML = esc(label) + '<div class="tnode-sub" style="font-weight:400;">n='+node.n+' · gini='+node.gini.toFixed(2)+'</div>';
+    }
+    wrap.appendChild(box);
+    if (!node.isLeaf){
+      var children = document.createElement('div');
+      children.className = 'tchildren';
+      children.style.gap = '14px';
+      children.appendChild(renderTreeNode(node.left, 'Sí'));
+      children.appendChild(renderTreeNode(node.right, 'No'));
+      wrap.appendChild(children);
+    }
+    return wrap;
+  }
+  function renderTree(){
+    var host = document.getElementById('treeHost');
+    host.innerHTML = '';
+    if (!state.tree){
+      host.innerHTML = state.insufficientData ? '<p class="note warn">No hay suficientes filas completas para esta combinación de variables y tamaño mínimo de hoja — reduce el tamaño mínimo de hoja o elige menos predictoras.</p>' : '<p class="note">Elige al menos una variable predictora arriba.</p>';
+      return;
+    }
+    host.appendChild(renderTreeNode(state.tree, null));
+  }
+
+  /* ============== CONFUSION MATRIX ============== */
+  function renderConfusion(){
+    var table = document.getElementById('confTable');
+    var metricHost = document.getElementById('metricCards');
+    if (!state.tree){ table.innerHTML=''; metricHost.innerHTML=''; return; }
+    var classes = Array.from(new Set(state.train.map(function(r){ return r[state.targetCol]; }))).sort();
+    var matrix = {}; classes.forEach(function(c){ matrix[c]={}; classes.forEach(function(c2){ matrix[c][c2]=0; }); });
+    state.test.forEach(function(r){
+      var pred = predictNode(state.tree, r).node.majority;
+      var actual = r[state.targetCol];
+      if (matrix[actual] && matrix[actual][pred]!=null) matrix[actual][pred]++;
+    });
+    var html = '<thead><tr><th>Real \\ Predicho</th>'+classes.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+    classes.forEach(function(c){
+      html += '<tr><th>'+esc(c)+'</th>'+classes.map(function(c2){
+        var v = matrix[c][c2];
+        var diag = c===c2;
+        return '<td class="mono" style="'+(diag?'font-weight:700;color:var(--accent-strong);':'')+'">'+v+'</td>';
+      }).join('')+'</tr>';
+    });
+    html += '</tbody>';
+    table.innerHTML = html;
+
+    var total = state.test.length;
+    var correct = classes.reduce(function(s,c){ return s+matrix[c][c]; },0);
+    var acc = total? correct/total : 0;
+    // binary-style precision/recall if exactly 2 classes, using class with fewer members as "positive" by convention (max count elsewhere)
+    var metrics = [{v:(acc*100).toFixed(1)+'%', l:'Exactitud (test)'}, {v:total, l:'Filas de prueba'}];
+    if (classes.length===2){
+      var pos = classes[0];
+      var tp = matrix[pos][pos], fn = (matrix[pos][classes[1]]||0), fp=(matrix[classes[1]][pos]||0), tn=matrix[classes[1]][classes[1]];
+      var prec = (tp+fp)? tp/(tp+fp) : 0, rec = (tp+fn)? tp/(tp+fn) : 0;
+      var f1 = (prec+rec)? 2*prec*rec/(prec+rec) : 0;
+      metrics.push({v:prec.toFixed(2), l:'Precisión ('+pos+')'});
+      metrics.push({v:rec.toFixed(2), l:'Recall ('+pos+')'});
+    }
+    metricHost.innerHTML = metrics.map(function(m){ return '<div class="metric"><div class="val">'+m.v+'</div><div class="lab">'+m.l+'</div></div>'; }).join('');
+  }
+
+  /* ============== IMPORTANCE CHART ============== */
+  function renderImportance(){
+    var canvas = document.getElementById('chartImportance');
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1,rect.width*dpr); canvas.height = Math.max(1,rect.height*dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W = rect.width, H = rect.height;
+    ctx.clearRect(0,0,W,H);
+    if (!state.tree) return;
+    var p = pal();
+    var entries = state.featCols.map(function(c){ return {name:c, v: state.importance[c]||0}; }).sort(function(a,b){ return b.v-a.v; });
+    var maxV = Math.max.apply(null, entries.map(function(e){return e.v;}))*1.2 || 1;
+    var padL=160, padR=50, padT=10, padB=10;
+    var rowH = (H-padT-padB)/entries.length;
+    ctx.font='12px IBM Plex Sans, sans-serif';
+    entries.forEach(function(e,i){
+      var y = padT + i*rowH + rowH*0.22;
+      var barH = rowH*0.56;
+      var w = (e.v/maxV)*(W-padL-padR);
+      ctx.fillStyle = p.text; ctx.textAlign='right'; ctx.fillText(e.name, padL-10, y+barH*0.5+4);
+      ctx.fillStyle = p.bar; ctx.globalAlpha=.85;
+      if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(padL, y, Math.max(w,2), barH, 5); ctx.fill(); } else ctx.fillRect(padL,y,Math.max(w,2),barH);
+      ctx.globalAlpha=1;
+      ctx.fillStyle = p.text2; ctx.textAlign='left'; ctx.fillText(e.v.toFixed(3), padL+w+8, y+barH*0.5+4);
+    });
+  }
+
+  /* ============== SIMULATOR ============== */
+  function renderSimForm(){
+    var host = document.getElementById('simHost');
+    if (!state.tree){ host.innerHTML='<p class="note">Construye el árbol primero.</p>'; return; }
+    var info = state.allCols;
+    var html = '';
+    state.featCols.forEach(function(c){
+      if (info[c] && info[c].type==='numeric'){
+        var vals = state.train.map(function(r){ return r[c]; }).filter(isFinite);
+        var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), mean=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+        if (!(c in state.simVals)) state.simVals[c] = Math.round(mean*10)/10;
+        html += '<div class="field" style="margin-bottom:12px;"><label>'+esc(c)+' <span class="mono" style="color:var(--muted);">('+fmtNum(mn,1)+' – '+fmtNum(mx,1)+')</span></label>' +
+                '<input type="number" step="0.1" data-col="'+esc(c)+'" value="'+state.simVals[c]+'"></div>';
+      } else {
+        var cats = Array.from(new Set(state.train.map(function(r){ return r[c]; })));
+        if (!(c in state.simVals)) state.simVals[c] = cats[0];
+        html += '<div class="field" style="margin-bottom:12px;"><label>'+esc(c)+'</label><select data-col="'+esc(c)+'">' +
+          cats.map(function(v){ return '<option value="'+esc(v)+'"'+(v===state.simVals[c]?' selected':'')+'>'+esc(v)+'</option>'; }).join('') + '</select></div>';
+      }
+    });
+    host.innerHTML = html;
+    Array.prototype.forEach.call(host.querySelectorAll('[data-col]'), function(el){
+      el.addEventListener('input', function(){
+        var c = el.getAttribute('data-col');
+        state.simVals[c] = (el.tagName==='SELECT') ? el.value : parseFloat(el.value);
+        renderPrediction();
+      });
+    });
+  }
+  function renderPrediction(){
+    var host = document.getElementById('predictHost');
+    if (!state.tree){ host.innerHTML=''; return; }
+    var row = {}; state.featCols.forEach(function(c){ row[c] = state.simVals[c]; });
+    var result = predictNode(state.tree, row);
+    var leaf = result.node;
+    var cls = classOfLeaf(leaf);
+    var total = Object.values(leaf.counts).reduce(function(a,b){return a+b;},0);
+    var pct = total? (leaf.counts[leaf.majority]/total*100) : 0;
+    var html = '<div class="predictbox '+cls+'"><div class="pv">'+esc(leaf.majority)+'</div><div class="pl">Predicción para '+esc(state.targetCol)+'</div>' +
+      '<div class="pl" style="margin-top:6px;">'+leaf.counts[leaf.majority]+' de '+total+' casos similares en entrenamiento ('+pct.toFixed(0)+'%) fueron "'+esc(leaf.majority)+'"</div>' +
+      '<ul class="pathlist">' + result.path.map(function(step){ return '<li>'+esc(step.cond)+' → <b>'+(step.taken?'Sí':'No')+'</b></li>'; }).join('') + '</ul>' +
+      '</div>';
+    host.innerHTML = html;
+  }
+
+  /* ============== BUSINESS SEGMENTS ============== */
+  function collectLeaves(node, acc){
+    if (node.isLeaf){ acc.push(node); return acc; }
+    collectLeaves(node.left, acc); collectLeaves(node.right, acc);
+    return acc;
+  }
+  function renderSegments(){
+    var host = document.getElementById('segHost');
+    if (!state.tree){ host.innerHTML=''; return; }
+    var leaves = collectLeaves(state.tree, []).filter(function(l){ return l.n>=10; });
+    var byClass = {};
+    leaves.forEach(function(l){ (byClass[l.majority] = byClass[l.majority]||[]).push(l); });
+    var top = [];
+    Object.keys(byClass).forEach(function(cls){
+      byClass[cls].sort(function(a,b){ return (b.n*(1-b.gini)) - (a.n*(1-a.gini)); });
+      top = top.concat(byClass[cls].slice(0,2));
+    });
+    top.sort(function(a,b){ return (b.n*(1-b.gini)) - (a.n*(1-a.gini)); });
+    top = top.slice(0,4);
+    host.innerHTML = top.map(function(l){
+      var total = Object.values(l.counts).reduce(function(a,b){return a+b;},0);
+      var rate = (l.counts[l.majority]/total*100).toFixed(0);
+      var cls = classOfLeaf(l);
+      var tag = cls==='cls-si' ? 'Alta probabilidad de conversión' : (cls==='cls-no' ? 'Baja probabilidad de conversión' : ('Perfil mixto — "'+esc(l.majority)+'" domina'));
+      return '<div class="leafcard"><h3>'+tag+'</h3>' +
+        '<div class="lc-rate">'+rate+'%</div>' +
+        '<div class="lc-rule">n='+l.n+' casos en entrenamiento &middot; gini='+l.gini.toFixed(2)+'</div>' +
+        '<p class="body">Este grupo representa <b>'+l.n+'</b> consultas de entrenamiento, de las cuales el <b>'+rate+'%</b> terminó en "'+esc(l.majority)+'" — un buen candidato para '+(cls==='cls-si' ? 'priorizar en campañas y respuesta rápida' : 'revisar precio o canal antes de invertir más esfuerzo comercial')+'.</p></div>';
+    }).join('') || '<p class="note">No hay hojas con al menos 10 casos para resumir como segmento.</p>';
+  }
+
+  /* ============== FILE INPUT WIRING ============== */
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  fileInput.addEventListener('change', function(){ if (fileInput.files[0]) parseFile(fileInput.files[0]); });
+  dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('drag'); });
+  dropzone.addEventListener('drop', function(e){ e.preventDefault(); dropzone.classList.remove('drag'); if (e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]); });
+  document.getElementById('btnRestore').addEventListener('click', function(){
+    state.rows = EMBEDDED.slice();
+    state.columns = ['canal','categoria','precio_cotizado','tiempo_respuesta_horas','consultas_previas_cliente','Convierte'];
+    state.allCols = {};
+    state.targetCol = 'Convierte';
+    state.featCols = ['canal','precio_cotizado','tiempo_respuesta_horas','consultas_previas_cliente'];
+    state.maxDepth = 4; state.minLeaf = 20;
+    state.simVals = {};
+    showStatus('Consultas de ejemplo restauradas.', false);
+    renderAll();
+  });
+
+  /* ============== MAIN RENDER ============== */
+  function renderAll(){
+    renderHead();
+    renderVarPickers();
+    rebuildAndRenderModel();
+  }
+
+  window.addEventListener('resize', function(){ renderImportance(); });
+  if (window.matchMedia){ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ renderImportance(); }); }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
