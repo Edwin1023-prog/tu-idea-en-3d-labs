@@ -99,6 +99,7 @@ table{width:100%; border-collapse:collapse; font-size:13px;}
 th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;}
 th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600;}
 tbody tr:hover{background:var(--surface-2);}
+tr.winner td{background:var(--accent-soft);}
 .table-wrap{overflow-x:auto; border-radius:10px;}
 
 .btnrow{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
@@ -121,19 +122,25 @@ button:hover{border-color:var(--accent);}
 
 .field{display:flex; flex-direction:column; gap:5px;}
 .field label{font-size:12px; color:var(--ink-2); font-weight:500;}
-select{font-family:var(--font-mono); font-size:13px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--raised); color:var(--ink); width:100%;}
+select,input[type=number]{font-family:var(--font-mono); font-size:13px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--raised); color:var(--ink); width:100%;}
 
 .metric{border-radius:12px; padding:14px 16px; border:1px solid var(--border); background:var(--surface); text-align:center;}
 .metric .val{font-family:var(--font-mono); font-size:26px; font-weight:600; color:var(--accent-strong);}
 .metric .lab{font-size:11.5px; color:var(--muted); margin-top:3px;}
 
 .eqn{font-family:var(--font-mono); font-size:14px; background:var(--accent-strong); color:var(--accent-contrast); padding:14px 16px; border-radius:10px; overflow-x:auto; white-space:nowrap;}
-:root[data-theme="dark"] .eqn, @media (prefers-color-scheme:dark){ } /* handled via token colors */
 
 .sigbadge{font-family:var(--font-mono); font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600;}
 .sigbadge.yes{color:var(--good); background:rgba(26,122,66,.12);}
 :root[data-theme="dark"] .sigbadge.yes, @media (prefers-color-scheme:dark){ .sigbadge.yes{background:rgba(79,191,120,.16);} }
 .sigbadge.no{color:var(--warn); background:rgba(181,121,10,.12);}
+
+.tag{display:inline-block; font-family:var(--font-mono); font-size:11px; padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border);}
+.tag.num{color:var(--accent-strong); border-color:var(--accent);}
+.tag.cat{color:var(--amber-strong); border-color:var(--amber);}
+.tag.date{color:var(--good); border-color:var(--good);}
+.star{color:var(--amber-strong); font-weight:700;}
+.badge-winner{font-family:var(--font-mono); font-size:10.5px; padding:2px 8px; border-radius:999px; background:var(--accent); color:var(--accent-contrast); font-weight:700; white-space:nowrap;}
 
 .chart-wrap{position:relative; height:240px; min-width:0;}
 canvas{display:block; width:100%; height:100%;}
@@ -145,6 +152,7 @@ canvas{display:block; width:100%; height:100%;}
 .slider-row .sr-val{font-family:var(--font-mono); font-size:13.5px; color:var(--amber-strong); font-weight:600;}
 input[type=range]{width:100%; accent-color:var(--amber);}
 .sr-range{font-family:var(--font-mono); font-size:11px; color:var(--muted); display:flex; justify-content:space-between;}
+.sr-how{font-size:11.5px; color:var(--muted); margin-top:2px;}
 
 .predbox{border-radius:14px; padding:20px; background:linear-gradient(135deg, var(--amber-soft), var(--surface)); border:1px solid var(--border); text-align:center;}
 .predbox .pv{font-family:var(--font-mono); font-size:34px; font-weight:700; color:var(--amber-strong);}
@@ -171,12 +179,15 @@ footer p + p{margin-top:8px;}
 <div class="pillnav">
   <div class="pillnav-inner">
     <a class="pill" href="#s1">1 · Importar</a>
-    <a class="pill" href="#s2">2 · Variables</a>
-    <a class="pill" href="#s3">3 · Correlación</a>
-    <a class="pill" href="#s4">4 · Modelo</a>
-    <a class="pill" href="#s5">5 · Diagnóstico</a>
-    <a class="pill" href="#s6">6 · Simulador</a>
-    <a class="pill" href="#s7">7 · Interpretación</a>
+    <a class="pill" href="#s2">2 · Filas y tipos</a>
+    <a class="pill" href="#s3">3 · Faltantes</a>
+    <a class="pill" href="#s4">4 · Variables</a>
+    <a class="pill" href="#s5">5 · AED</a>
+    <a class="pill" href="#s6">6 · Mejor modelo</a>
+    <a class="pill" href="#s7">7 · Fórmula</a>
+    <a class="pill" href="#s8">8 · Diagnóstico</a>
+    <a class="pill" href="#s9">9 · Simulador</a>
+    <a class="pill" href="#s10">10 · Recomendaciones</a>
   </div>
 </div>
 
@@ -184,7 +195,7 @@ footer p + p{margin-top:8px;}
   <div class="hero">
     <div class="eyebrow">Regresión lineal múltiple · Pronósticos · metodología CRISP-DM</div>
     <h1>Qué variables explican realmente tus resultados</h1>
-    <p class="lede">Importa tu propia tabla (o usa la bitácora de inversión en publicidad de Tu Idea en 3D, ya cargada), elige la variable que quieres explicar y hasta 4 predictoras, y el modelo de mínimos cuadrados se ajusta <em>en vivo, en tu navegador</em> — con sus diagnósticos y un simulador de escenarios "qué pasaría si".</p>
+    <p class="lede">Importa tu propia tabla (o usa la bitácora de inversión en publicidad de Tu Idea en 3D, ya cargada), y la app limpia datos faltantes, sugiere objetivo y predictoras (numéricas y categóricas, estas últimas convertidas a variables dummy), compara varios modelos y elige el mejor, y simula escenarios de negocio &mdash; todo <em>en vivo, en tu navegador</em>.</p>
   </div>
 
   <!-- ===== 1 · IMPORTAR ===== -->
@@ -194,14 +205,14 @@ footer p + p{margin-top:8px;}
       <div>
         <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
         <h2>Importar la base de datos</h2>
-        <p>Cualquier archivo de datos tabulares: CSV, TSV, JSON, Excel u OpenDocument. Ya viene cargada la bitácora mensual de inversión en publicidad e ingresos de Tu Idea en 3D — puedes reemplazarla por la tuya.</p>
+        <p>Cualquier archivo de datos tabulares: CSV, TSV, TXT, JSON, Excel u OpenDocument. Ya viene cargada la bitácora mensual de inversión en publicidad e ingresos de Tu Idea en 3D &mdash; puedes reemplazarla por la tuya.</p>
       </div>
     </div>
     <div class="card">
       <label class="dropzone" id="dropzone">
         <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,.xlsm,.ods">
         <div class="dz-title">Arrastra un archivo o haz clic para elegirlo</div>
-        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods</div>
+        <div class="dz-sub">.csv &nbsp;·&nbsp; .tsv &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .json &nbsp;·&nbsp; .xlsx / .xls / .xlsm &nbsp;·&nbsp; .ods</div>
       </label>
       <div id="fileStatus" class="note" style="margin-top:12px;"></div>
       <div class="btnrow" style="margin-top:10px;">
@@ -210,14 +221,14 @@ footer p + p{margin-top:8px;}
     </div>
   </section>
 
-  <!-- ===== 2 · VARIABLES ===== -->
+  <!-- ===== 2 · FILAS Y TIPOS ===== -->
   <section class="step" id="s2">
     <div class="step-head">
       <div class="step-num">2</div>
       <div>
-        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
-        <h2>Primeras filas y elección de variables</h2>
-        <p>Elige la variable numérica que quieres <b>explicar</b> (objetivo) y hasta 4 variables numéricas <b>predictoras</b>.</p>
+        <p class="step-phase">CRISP-DM · Fase 2 &middot; Comprensión de los datos</p>
+        <h2>Primeras 5 filas y tipos de variable</h2>
+        <p>Verificación rápida de la estructura importada y clasificación automática de cada columna: cuantitativa (numérica) o cualitativa (categórica), con su cardinalidad.</p>
       </div>
     </div>
     <div class="card">
@@ -225,13 +236,50 @@ footer p + p{margin-top:8px;}
       <p class="note" id="shapeNote" style="margin-top:10px;"></p>
     </div>
     <div class="card">
+      <div class="table-wrap"><table id="typesTable"></table></div>
+      <p class="note" style="margin-top:10px;">Las categóricas con <b>2 a 8</b> niveles distintos quedan disponibles como predictoras (se convierten en variables <em>dummy</em>, paso 4); con más niveles la app las muestra pero las deja fuera del modelo para no fragmentar demasiado la muestra.</p>
+    </div>
+  </section>
+
+  <!-- ===== 3 · FALTANTES ===== -->
+  <section class="step" id="s3">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Datos faltantes e imputación</h2>
+        <p>Diagnóstico de valores faltantes por columna y dos estrategias de limpieza, antes de elegir variables o ajustar cualquier modelo.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="missingTable"></table></div>
+      <div class="btnrow" style="margin-top:12px;">
+        <button type="button" id="btnCleanDrop">Eliminar filas con faltantes</button>
+        <button type="button" id="btnCleanImpute">Imputar (mediana / moda)</button>
+        <button type="button" id="btnCleanReset">Restaurar datos originales</button>
+      </div>
+      <p class="note" id="cleanStatus" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ===== 4 · VARIABLES ===== -->
+  <section class="step" id="s4">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
+        <h2>Sugerencia y selección de variables</h2>
+        <p>La app <b>sugiere</b> (&#9733;) una variable objetivo y hasta 4 predictoras según su asociación estadística con el objetivo y el contexto de negocio &mdash; puedes aceptarlas o cambiarlas. Las categóricas elegidas se convierten en variables <em>dummy</em> (0/1) automáticamente.</p>
+      </div>
+    </div>
+    <div class="card">
       <div class="grid-2">
         <div class="field">
-          <label>Variable objetivo (lo que quieres explicar)</label>
+          <label>Variable objetivo &mdash; lo que quieres explicar (&#9733; = sugerida)</label>
           <select id="targetSelect"></select>
         </div>
         <div class="field">
-          <label>Variables predictoras (marca hasta 4)</label>
+          <label>Variables predictoras &mdash; marca hasta 4 (&#9733; = sugeridas)</label>
           <div id="featChecks" style="display:flex; flex-direction:column; gap:7px; margin-top:2px;"></div>
         </div>
       </div>
@@ -239,32 +287,56 @@ footer p + p{margin-top:8px;}
     </div>
   </section>
 
-  <!-- ===== 3 · CORRELACIÓN ===== -->
-  <section class="step" id="s3">
+  <!-- ===== 5 · AED ===== -->
+  <section class="step" id="s5">
     <div class="step-head">
-      <div class="step-num">3</div>
+      <div class="step-num">5</div>
       <div>
         <p class="step-phase">CRISP-DM · Fase 3 &middot; Preparación de los datos</p>
-        <h2>Correlaciones y multicolinealidad</h2>
-        <p>Correlación de Pearson entre todas las variables numéricas elegidas, y el Factor de Inflación de Varianza (VIF) de cada predictora &mdash; VIF &gt; 5 es señal de alerta, VIF &gt; 10 es grave.</p>
+        <h2>Análisis exploratorio: asociación, correlación y reglas de negocio</h2>
+        <p>Fuerza de asociación de cada candidata con el objetivo (correlación de Pearson para numéricas, &eta;&sup2; para categóricas), correlación/VIF entre las predictoras elegidas, y qué dice todo esto del negocio.</p>
       </div>
     </div>
     <div class="card">
+      <h3 style="margin-bottom:8px;">Asociación de cada variable candidata con el objetivo</h3>
+      <div class="table-wrap"><table id="assocTable"></table></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:8px;">Correlación de Pearson (predictoras numéricas elegidas)</h3>
       <div class="table-wrap"><table id="corrTable"></table></div>
     </div>
     <div class="card">
+      <h3 style="margin-bottom:8px;">VIF &mdash; Factor de Inflación de Varianza</h3>
       <div class="table-wrap"><table id="vifTable"></table></div>
+      <p class="note" style="margin-top:10px;">VIF &gt; 5 es señal de alerta, VIF &gt; 10 es grave multicolinealidad entre predictoras numéricas.</p>
+    </div>
+    <div class="card" id="businessRulesHost"></div>
+  </section>
+
+  <!-- ===== 6 · MEJOR MODELO ===== -->
+  <section class="step" id="s6">
+    <div class="step-head">
+      <div class="step-num">6</div>
+      <div>
+        <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
+        <h2>Comparación de modelos y criterio de selección</h2>
+        <p>Se ajustan <b>todas las combinaciones posibles</b> de las predictoras elegidas en el paso 4 (cada combinación es un modelo distinto) y se elige el de mayor <b>R&sup2; ajustado</b> &mdash; penaliza agregar variables que no mejoran de verdad el ajuste, a diferencia del R&sup2; simple.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="subsetTable"></table></div>
+      <p class="note" id="subsetNote" style="margin-top:10px;"></p>
     </div>
   </section>
 
-  <!-- ===== 4 · MODELO ===== -->
-  <section class="step" id="s4">
+  <!-- ===== 7 · FÓRMULA ===== -->
+  <section class="step" id="s7">
     <div class="step-head">
-      <div class="step-num">4</div>
+      <div class="step-num">7</div>
       <div>
         <p class="step-phase">CRISP-DM · Fase 4 &middot; Modelado</p>
-        <h2>El modelo de regresión múltiple</h2>
-        <p>Ajustado por mínimos cuadrados ordinarios (OLS) con <b>todos los datos disponibles</b> &mdash; aquí el objetivo es entender la relación entre variables, no medir qué tan bien generaliza a datos nuevos.</p>
+        <h2>El modelo ganador: fórmula y coeficientes</h2>
+        <p>Ajustado por mínimos cuadrados ordinarios (OLS) con <b>todos los datos disponibles</b> &mdash; aquí el objetivo es entender la relación entre variables, no medir qué tan bien generaliza a datos nuevos. Las variables categóricas se leen contra su nivel base (el primero en orden alfabético).</p>
       </div>
     </div>
     <div class="card">
@@ -275,13 +347,14 @@ footer p + p{margin-top:8px;}
     </div>
     <div class="card">
       <div class="table-wrap"><table id="coefTable"></table></div>
+      <p class="note" id="coefBaselineNote" style="margin-top:10px; display:none;"></p>
     </div>
   </section>
 
-  <!-- ===== 5 · DIAGNÓSTICO ===== -->
-  <section class="step" id="s5">
+  <!-- ===== 8 · DIAGNÓSTICO ===== -->
+  <section class="step" id="s8">
     <div class="step-head">
-      <div class="step-num">5</div>
+      <div class="step-num">8</div>
       <div>
         <p class="step-phase">CRISP-DM · Fase 5 &middot; Evaluación</p>
         <h2>Diagnóstico de residuales</h2>
@@ -304,10 +377,10 @@ footer p + p{margin-top:8px;}
     </div>
   </section>
 
-  <!-- ===== 6 · SIMULADOR ===== -->
-  <section class="step" id="s6">
+  <!-- ===== 9 · SIMULADOR ===== -->
+  <section class="step" id="s9">
     <div class="step-head">
-      <div class="step-num">6</div>
+      <div class="step-num">9</div>
       <div>
         <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
         <h2>Simulador de escenarios &mdash; "¿qué pasaría si...?"</h2>
@@ -320,21 +393,21 @@ footer p + p{margin-top:8px;}
     </div>
   </section>
 
-  <!-- ===== 7 · INTERPRETACIÓN ===== -->
-  <section class="step" id="s7">
+  <!-- ===== 10 · RECOMENDACIONES ===== -->
+  <section class="step" id="s10">
     <div class="step-head">
-      <div class="step-num">7</div>
+      <div class="step-num">10</div>
       <div>
         <p class="step-phase">CRISP-DM · Fase 6 &middot; Despliegue</p>
-        <h2>Interpretación de negocio</h2>
-        <p>Qué dice el modelo, en palabras simples.</p>
+        <h2>Recomendaciones de negocio</h2>
+        <p>Qué dice el modelo ganador sobre la pregunta de negocio planteada, en palabras simples y con sus límites.</p>
       </div>
     </div>
     <div class="card" id="interpretHost"></div>
   </section>
 
   <footer>
-    <p><b>Honestidad metodológica:</b> el modelo (mínimos cuadrados, pruebas t y F, VIF, intervalos de predicción) corre completo en tu navegador, con las mismas fórmulas que usa cualquier paquete estadístico. Con 4 variables o menos y pocas decenas de filas, los p-valores y el R² ajustado son más confiables que el R² simple &mdash; por eso el modelo limita a un máximo de 4 predictoras. La bitácora precargada es una simulación de la actividad mensual de Tu Idea en 3D; con tus propios datos, reemplázala en el paso 1 y todo se recalcula solo.</p>
+    <p><b>Honestidad metodológica:</b> el modelo (mínimos cuadrados, pruebas t y F, VIF, intervalos de predicción, comparación de subconjuntos por R&sup2; ajustado) corre completo en tu navegador, con las mismas fórmulas que usa cualquier paquete estadístico. Las variables faltantes se pueden eliminar o imputar con mediana (numéricas) / moda (categóricas); las categóricas se codifican como variables dummy usando el primer nivel en orden alfabético como base (la misma convención que <span class="mono">statsmodels</span> o R). Con pocas decenas de filas, el R&sup2; ajustado es más confiable que el R&sup2; simple para elegir entre modelos &mdash; por eso la comparación del paso 6 usa ese criterio, y el modelo limita a un máximo de 4 predictoras. La bitácora precargada es una simulación de la actividad mensual de Tu Idea en 3D; con tus propios datos, reemplázala en el paso 1 y todo se recalcula solo.</p>
   </footer>
 </div>
 
@@ -465,53 +538,152 @@ footer p + p{margin-top:8px;}
     if (sxx===0||syy===0) return 0;
     return sxy/Math.sqrt(sxx*syy);
   }
+  function etaSquared(rows, catCol, targetCol){
+    var groups = {};
+    rows.forEach(function(r){
+      var v = numericValue(r[targetCol]); var g = String(r[catCol]);
+      if (v===null || isMissing(r[catCol])) return;
+      (groups[g]=groups[g]||[]).push(v);
+    });
+    var keys = Object.keys(groups);
+    var all = []; keys.forEach(function(k){ all = all.concat(groups[k]); });
+    var n = all.length; if (!n || keys.length<2) return 0;
+    var grandMean = all.reduce(function(a,b){return a+b;},0)/n;
+    var ssTotal = all.reduce(function(s,v){ return s+(v-grandMean)*(v-grandMean); },0);
+    if (ssTotal===0) return 0;
+    var ssBetween = 0;
+    keys.forEach(function(k){
+      var vals=groups[k]; var m=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+      ssBetween += vals.length*(m-grandMean)*(m-grandMean);
+    });
+    return ssBetween/ssTotal;
+  }
 
   /* ============== EMBEDDED DEFAULT DATA (bitácora mensual, Tu Idea en 3D) ============== */
-  var EMBEDDED = [{"Mes":"2023-01","Inversion_publicidad":400000,"Seguidores_nuevos":104,"Consultas_recibidas":29,"Ingresos_mensuales":1230000},{"Mes":"2023-02","Inversion_publicidad":445000,"Seguidores_nuevos":227,"Consultas_recibidas":33,"Ingresos_mensuales":2790000},{"Mes":"2023-03","Inversion_publicidad":359000,"Seguidores_nuevos":349,"Consultas_recibidas":43,"Ingresos_mensuales":2200000},{"Mes":"2023-04","Inversion_publicidad":266000,"Seguidores_nuevos":73,"Consultas_recibidas":20,"Ingresos_mensuales":1880000},{"Mes":"2023-05","Inversion_publicidad":332000,"Seguidores_nuevos":302,"Consultas_recibidas":46,"Ingresos_mensuales":2660000},{"Mes":"2023-06","Inversion_publicidad":251000,"Seguidores_nuevos":231,"Consultas_recibidas":36,"Ingresos_mensuales":2720000},{"Mes":"2023-07","Inversion_publicidad":409000,"Seguidores_nuevos":159,"Consultas_recibidas":34,"Ingresos_mensuales":2450000},{"Mes":"2023-08","Inversion_publicidad":601000,"Seguidores_nuevos":410,"Consultas_recibidas":61,"Ingresos_mensuales":3380000},{"Mes":"2023-09","Inversion_publicidad":326000,"Seguidores_nuevos":292,"Consultas_recibidas":37,"Ingresos_mensuales":3070000},{"Mes":"2023-10","Inversion_publicidad":307000,"Seguidores_nuevos":106,"Consultas_recibidas":33,"Ingresos_mensuales":2820000},{"Mes":"2023-11","Inversion_publicidad":473000,"Seguidores_nuevos":227,"Consultas_recibidas":41,"Ingresos_mensuales":2800000},{"Mes":"2023-12","Inversion_publicidad":454000,"Seguidores_nuevos":275,"Consultas_recibidas":46,"Ingresos_mensuales":2990000},{"Mes":"2024-01","Inversion_publicidad":416000,"Seguidores_nuevos":202,"Consultas_recibidas":29,"Ingresos_mensuales":2150000},{"Mes":"2024-02","Inversion_publicidad":260000,"Seguidores_nuevos":285,"Consultas_recibidas":38,"Ingresos_mensuales":2110000},{"Mes":"2024-03","Inversion_publicidad":396000,"Seguidores_nuevos":214,"Consultas_recibidas":27,"Ingresos_mensuales":2550000},{"Mes":"2024-04","Inversion_publicidad":504000,"Seguidores_nuevos":283,"Consultas_recibidas":33,"Ingresos_mensuales":2320000},{"Mes":"2024-05","Inversion_publicidad":198000,"Seguidores_nuevos":357,"Consultas_recibidas":36,"Ingresos_mensuales":2400000},{"Mes":"2024-06","Inversion_publicidad":331000,"Seguidores_nuevos":156,"Consultas_recibidas":25,"Ingresos_mensuales":1590000},{"Mes":"2024-07","Inversion_publicidad":115000,"Seguidores_nuevos":239,"Consultas_recibidas":28,"Ingresos_mensuales":1630000},{"Mes":"2024-08","Inversion_publicidad":207000,"Seguidores_nuevos":176,"Consultas_recibidas":40,"Ingresos_mensuales":1970000},{"Mes":"2024-09","Inversion_publicidad":124000,"Seguidores_nuevos":232,"Consultas_recibidas":22,"Ingresos_mensuales":2150000},{"Mes":"2024-10","Inversion_publicidad":365000,"Seguidores_nuevos":107,"Consultas_recibidas":25,"Ingresos_mensuales":1850000},{"Mes":"2024-11","Inversion_publicidad":210000,"Seguidores_nuevos":165,"Consultas_recibidas":28,"Ingresos_mensuales":2320000},{"Mes":"2024-12","Inversion_publicidad":441000,"Seguidores_nuevos":201,"Consultas_recibidas":41,"Ingresos_mensuales":2780000},{"Mes":"2025-01","Inversion_publicidad":424000,"Seguidores_nuevos":305,"Consultas_recibidas":42,"Ingresos_mensuales":2620000},{"Mes":"2025-02","Inversion_publicidad":372000,"Seguidores_nuevos":329,"Consultas_recibidas":41,"Ingresos_mensuales":2710000},{"Mes":"2025-03","Inversion_publicidad":80000,"Seguidores_nuevos":94,"Consultas_recibidas":21,"Ingresos_mensuales":1190000},{"Mes":"2025-04","Inversion_publicidad":319000,"Seguidores_nuevos":145,"Consultas_recibidas":33,"Ingresos_mensuales":2240000},{"Mes":"2025-05","Inversion_publicidad":393000,"Seguidores_nuevos":281,"Consultas_recibidas":34,"Ingresos_mensuales":2350000},{"Mes":"2025-06","Inversion_publicidad":417000,"Seguidores_nuevos":31,"Consultas_recibidas":26,"Ingresos_mensuales":1810000},{"Mes":"2025-07","Inversion_publicidad":170000,"Seguidores_nuevos":176,"Consultas_recibidas":26,"Ingresos_mensuales":1210000},{"Mes":"2025-08","Inversion_publicidad":328000,"Seguidores_nuevos":211,"Consultas_recibidas":27,"Ingresos_mensuales":1730000},{"Mes":"2025-09","Inversion_publicidad":253000,"Seguidores_nuevos":339,"Consultas_recibidas":40,"Ingresos_mensuales":3370000},{"Mes":"2025-10","Inversion_publicidad":279000,"Seguidores_nuevos":285,"Consultas_recibidas":31,"Ingresos_mensuales":1960000},{"Mes":"2025-11","Inversion_publicidad":559000,"Seguidores_nuevos":189,"Consultas_recibidas":48,"Ingresos_mensuales":2760000},{"Mes":"2025-12","Inversion_publicidad":279000,"Seguidores_nuevos":185,"Consultas_recibidas":31,"Ingresos_mensuales":2320000},{"Mes":"2026-01","Inversion_publicidad":395000,"Seguidores_nuevos":196,"Consultas_recibidas":36,"Ingresos_mensuales":3110000},{"Mes":"2026-02","Inversion_publicidad":533000,"Seguidores_nuevos":365,"Consultas_recibidas":48,"Ingresos_mensuales":2710000},{"Mes":"2026-03","Inversion_publicidad":312000,"Seguidores_nuevos":179,"Consultas_recibidas":31,"Ingresos_mensuales":2080000},{"Mes":"2026-04","Inversion_publicidad":383000,"Seguidores_nuevos":191,"Consultas_recibidas":23,"Ingresos_mensuales":1620000},{"Mes":"2026-05","Inversion_publicidad":417000,"Seguidores_nuevos":253,"Consultas_recibidas":33,"Ingresos_mensuales":1710000},{"Mes":"2026-06","Inversion_publicidad":410000,"Seguidores_nuevos":209,"Consultas_recibidas":39,"Ingresos_mensuales":2990000}];
+  var EMBEDDED = [{"Mes":"2023-01","Inversion_publicidad":400000,"Seguidores_nuevos":104,"Consultas_recibidas":29,"Ingresos_mensuales":1230000,"Canal_principal":"WhatsApp Business"},{"Mes":"2023-02","Inversion_publicidad":445000,"Seguidores_nuevos":227,"Consultas_recibidas":33,"Ingresos_mensuales":2790000,"Canal_principal":"TikTok"},{"Mes":"2023-03","Inversion_publicidad":359000,"Seguidores_nuevos":349,"Consultas_recibidas":43,"Ingresos_mensuales":2200000,"Canal_principal":"Instagram"},{"Mes":"2023-04","Inversion_publicidad":266000,"Seguidores_nuevos":73,"Consultas_recibidas":20,"Ingresos_mensuales":1880000,"Canal_principal":"WhatsApp Business"},{"Mes":"2023-05","Inversion_publicidad":332000,"Seguidores_nuevos":302,"Consultas_recibidas":46,"Ingresos_mensuales":2660000,"Canal_principal":"TikTok"},{"Mes":"2023-06","Inversion_publicidad":251000,"Seguidores_nuevos":231,"Consultas_recibidas":36,"Ingresos_mensuales":2720000,"Canal_principal":"TikTok"},{"Mes":"2023-07","Inversion_publicidad":409000,"Seguidores_nuevos":159,"Consultas_recibidas":34,"Ingresos_mensuales":2450000,"Canal_principal":"Instagram"},{"Mes":"2023-08","Inversion_publicidad":601000,"Seguidores_nuevos":410,"Consultas_recibidas":61,"Ingresos_mensuales":3380000,"Canal_principal":"TikTok"},{"Mes":"2023-09","Inversion_publicidad":326000,"Seguidores_nuevos":292,"Consultas_recibidas":37,"Ingresos_mensuales":3070000,"Canal_principal":"Instagram"},{"Mes":"2023-10","Inversion_publicidad":307000,"Seguidores_nuevos":106,"Consultas_recibidas":33,"Ingresos_mensuales":2820000,"Canal_principal":"WhatsApp Business"},{"Mes":"2023-11","Inversion_publicidad":473000,"Seguidores_nuevos":227,"Consultas_recibidas":41,"Ingresos_mensuales":2800000,"Canal_principal":"WhatsApp Business"},{"Mes":"2023-12","Inversion_publicidad":454000,"Seguidores_nuevos":275,"Consultas_recibidas":46,"Ingresos_mensuales":2990000,"Canal_principal":"Instagram"},{"Mes":"2024-01","Inversion_publicidad":416000,"Seguidores_nuevos":202,"Consultas_recibidas":29,"Ingresos_mensuales":2150000,"Canal_principal":"Instagram"},{"Mes":"2024-02","Inversion_publicidad":260000,"Seguidores_nuevos":285,"Consultas_recibidas":38,"Ingresos_mensuales":2110000,"Canal_principal":"Instagram"},{"Mes":"2024-03","Inversion_publicidad":396000,"Seguidores_nuevos":214,"Consultas_recibidas":27,"Ingresos_mensuales":2550000,"Canal_principal":"Instagram"},{"Mes":"2024-04","Inversion_publicidad":504000,"Seguidores_nuevos":283,"Consultas_recibidas":33,"Ingresos_mensuales":2320000,"Canal_principal":"Instagram"},{"Mes":"2024-05","Inversion_publicidad":198000,"Seguidores_nuevos":357,"Consultas_recibidas":36,"Ingresos_mensuales":2400000,"Canal_principal":"WhatsApp Business"},{"Mes":"2024-06","Inversion_publicidad":331000,"Seguidores_nuevos":156,"Consultas_recibidas":25,"Ingresos_mensuales":1590000,"Canal_principal":"Instagram"},{"Mes":"2024-07","Inversion_publicidad":115000,"Seguidores_nuevos":239,"Consultas_recibidas":28,"Ingresos_mensuales":1630000,"Canal_principal":"WhatsApp Business"},{"Mes":"2024-08","Inversion_publicidad":207000,"Seguidores_nuevos":176,"Consultas_recibidas":40,"Ingresos_mensuales":1970000,"Canal_principal":"Instagram"},{"Mes":"2024-09","Inversion_publicidad":124000,"Seguidores_nuevos":232,"Consultas_recibidas":22,"Ingresos_mensuales":2150000,"Canal_principal":"Instagram"},{"Mes":"2024-10","Inversion_publicidad":365000,"Seguidores_nuevos":107,"Consultas_recibidas":25,"Ingresos_mensuales":1850000,"Canal_principal":"WhatsApp Business"},{"Mes":"2024-11","Inversion_publicidad":210000,"Seguidores_nuevos":165,"Consultas_recibidas":28,"Ingresos_mensuales":2320000,"Canal_principal":"TikTok"},{"Mes":"2024-12","Inversion_publicidad":441000,"Seguidores_nuevos":201,"Consultas_recibidas":41,"Ingresos_mensuales":2780000,"Canal_principal":"WhatsApp Business"},{"Mes":"2025-01","Inversion_publicidad":424000,"Seguidores_nuevos":305,"Consultas_recibidas":42,"Ingresos_mensuales":2620000,"Canal_principal":"Instagram"},{"Mes":"2025-02","Inversion_publicidad":372000,"Seguidores_nuevos":329,"Consultas_recibidas":41,"Ingresos_mensuales":2710000,"Canal_principal":"TikTok"},{"Mes":"2025-03","Inversion_publicidad":80000,"Seguidores_nuevos":94,"Consultas_recibidas":21,"Ingresos_mensuales":1190000,"Canal_principal":"WhatsApp Business"},{"Mes":"2025-04","Inversion_publicidad":319000,"Seguidores_nuevos":145,"Consultas_recibidas":33,"Ingresos_mensuales":2240000,"Canal_principal":"WhatsApp Business"},{"Mes":"2025-05","Inversion_publicidad":393000,"Seguidores_nuevos":281,"Consultas_recibidas":34,"Ingresos_mensuales":2350000,"Canal_principal":"TikTok"},{"Mes":"2025-06","Inversion_publicidad":417000,"Seguidores_nuevos":31,"Consultas_recibidas":26,"Ingresos_mensuales":1810000,"Canal_principal":"WhatsApp Business"},{"Mes":"2025-07","Inversion_publicidad":170000,"Seguidores_nuevos":176,"Consultas_recibidas":26,"Ingresos_mensuales":1210000,"Canal_principal":"Instagram"},{"Mes":"2025-08","Inversion_publicidad":328000,"Seguidores_nuevos":211,"Consultas_recibidas":27,"Ingresos_mensuales":1730000,"Canal_principal":"Instagram"},{"Mes":"2025-09","Inversion_publicidad":253000,"Seguidores_nuevos":339,"Consultas_recibidas":40,"Ingresos_mensuales":3370000,"Canal_principal":"Instagram"},{"Mes":"2025-10","Inversion_publicidad":279000,"Seguidores_nuevos":285,"Consultas_recibidas":31,"Ingresos_mensuales":1960000,"Canal_principal":"Instagram"},{"Mes":"2025-11","Inversion_publicidad":559000,"Seguidores_nuevos":189,"Consultas_recibidas":48,"Ingresos_mensuales":2760000,"Canal_principal":"Instagram"},{"Mes":"2025-12","Inversion_publicidad":279000,"Seguidores_nuevos":185,"Consultas_recibidas":31,"Ingresos_mensuales":2320000,"Canal_principal":"Instagram"},{"Mes":"2026-01","Inversion_publicidad":395000,"Seguidores_nuevos":196,"Consultas_recibidas":36,"Ingresos_mensuales":3110000,"Canal_principal":"TikTok"},{"Mes":"2026-02","Inversion_publicidad":533000,"Seguidores_nuevos":365,"Consultas_recibidas":48,"Ingresos_mensuales":2710000,"Canal_principal":"Instagram"},{"Mes":"2026-03","Inversion_publicidad":312000,"Seguidores_nuevos":179,"Consultas_recibidas":31,"Ingresos_mensuales":2080000,"Canal_principal":"WhatsApp Business"},{"Mes":"2026-04","Inversion_publicidad":383000,"Seguidores_nuevos":191,"Consultas_recibidas":23,"Ingresos_mensuales":1620000,"Canal_principal":"WhatsApp Business"},{"Mes":"2026-05","Inversion_publicidad":417000,"Seguidores_nuevos":253,"Consultas_recibidas":33,"Ingresos_mensuales":1710000,"Canal_principal":"Instagram"},{"Mes":"2026-06","Inversion_publicidad":410000,"Seguidores_nuevos":209,"Consultas_recibidas":39,"Ingresos_mensuales":2990000,"Canal_principal":"Instagram"}];
 
   /* ============== STATE ============== */
   var state = {
-    rows: EMBEDDED.slice(),
-    columns: ['Mes','Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'],
-    numericCols: ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'],
-    targetCol: 'Ingresos_mensuales',
-    featCols: ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas'],
+    rows: [], originalRows: [],
+    columns: [], types: {},
+    numericCols: [], categoricalCols: [], categoricalAll: [],
+    targetCol: null, suggestedTarget: null,
+    featCols: [], suggestedFeats: [],
+    subsetResults: [], winningTerms: [],
     fit: null,
-    sliderVals: {}
+    scenarioVals: {}
   };
 
   function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
   function fmtNum(v,d){ if (v==null||isNaN(v)) return '—'; return Number(v).toLocaleString('es-CO',{maximumFractionDigits:d==null?2:d}); }
-  function fmtCOP(v){ if (v==null||isNaN(v)) return '—'; return '$'+Math.round(v).toLocaleString('es-CO'); }
+  function isMissing(v){ return v===null||v===undefined||v===''||(typeof v==='number'&&isNaN(v)); }
+  function numericValue(v){ if (isMissing(v)) return null; var n = (typeof v==='number')?v:parseFloat(v); return isFinite(n)?n:null; }
 
-  /* ============== PARSING ============== */
-  function looksLikeId(c, rows){
-    if (/(^|_)id($|_)|^id$|^no\.?$|^#$/i.test(c)) return true;
-    return false;
+  /* ============== PARSING / COLUMN DETECTION ============== */
+  function looksLikeId(c){ return /(^|_)id($|_)|^id$|^no\.?$|^#$/i.test(c); }
+  function looksLikeDate(v){ return typeof v === 'string' && /^\d{4}-\d{2}(-\d{2})?/.test(v); }
+  function detectColumnType(rows, col){
+    var vals = rows.map(function(r){ return r[col]; }).filter(function(v){ return !isMissing(v); });
+    if (!vals.length) return {tipo:'Cualitativa', sub:'nominal (vacía)', numeric:false, distinct:0};
+    if (vals.every(looksLikeDate)) return {tipo:'Fecha', sub:'temporal', numeric:false, distinct:new Set(vals).size};
+    var numCount = vals.filter(function(v){ return (typeof v==='number'&&isFinite(v)) || (typeof v==='string'&&v.trim()!==''&&isFinite(Number(v))); }).length;
+    var isNumeric = numCount/vals.length >= 0.8;
+    var distinct = new Set(vals.map(String)).size;
+    if (isNumeric){
+      var nums = vals.map(Number);
+      var allInt = nums.every(function(n){ return Number.isInteger(n); });
+      return {tipo:'Cuantitativa', sub: (allInt && distinct<=20) ? 'discreta' : (allInt?'discreta':'continua'), numeric:true, distinct:distinct};
+    }
+    return {tipo:'Cualitativa', sub: distinct<=15 ? 'nominal' : 'nominal (alta cardinalidad)', numeric:false, distinct:distinct};
   }
-  function detectColumns(rows){
-    var cols = Object.keys(rows[0] || {});
-    var numeric = [], text = [];
+  function detectColumnsFull(rows){
+    var cols = Object.keys(rows[0]||{});
+    var types={}, numeric=[], categorical=[], categoricalEligible=[];
     cols.forEach(function(c){
-      var vals = rows.map(function(r){ return r[c]; }).filter(function(v){ return v!==null && v!==undefined && v!==''; });
-      var numCount = vals.filter(function(v){ return (typeof v === 'number' && isFinite(v)) || (typeof v==='string' && v.trim()!=='' && isFinite(Number(v))); }).length;
-      if (vals.length && numCount/vals.length >= 0.8) numeric.push(c); else text.push(c);
+      var t = detectColumnType(rows,c);
+      types[c]=t;
+      if (t.numeric && !looksLikeId(c)) numeric.push(c);
+      else if (!t.numeric){
+        categorical.push(c);
+        if (t.distinct>=2 && t.distinct<=8) categoricalEligible.push(c);
+      }
     });
-    return { cols:cols, numeric:numeric, text:text };
+    return {cols:cols, types:types, numeric:numeric, categorical:categorical, categoricalEligible:categoricalEligible};
+  }
+
+  function buildMatrixNumeric(cols, rows){
+    rows = rows || state.rows;
+    var use = rows.filter(function(r){ return cols.every(function(c){ return numericValue(r[c])!==null; }); });
+    var M = use.map(function(r){ return cols.map(function(c){ return numericValue(r[c]); }); });
+    return {M:M, rows:use};
+  }
+
+  /* ============== SUGGESTIONS ============== */
+  var BUSINESS_KEYWORDS = /ingreso|venta|ganancia|utilidad|revenue|income|profit|conversion|convertid|total|monto|recaud/i;
+  function suggestTargetFrom(rows, numericCols){
+    if (!numericCols.length) return null;
+    var kwMatches = numericCols.filter(function(c){ return BUSINESS_KEYWORDS.test(c); });
+    if (kwMatches.length) return kwMatches[0];
+    if (numericCols.length===1) return numericCols[0];
+    var best=null, bestScore=-1;
+    numericCols.forEach(function(c){
+      var others = numericCols.filter(function(c2){ return c2!==c; });
+      var built = buildMatrixNumeric([c].concat(others), rows);
+      if (!built.M.length) return;
+      var scores = others.map(function(_,j){
+        var xs = built.M.map(function(r){return r[0];}), ys = built.M.map(function(r){return r[j+1];});
+        return Math.abs(pearson(xs,ys));
+      });
+      var avg = scores.length ? scores.reduce(function(a,b){return a+b;},0)/scores.length : 0;
+      if (avg>bestScore){ bestScore=avg; best=c; }
+    });
+    return best || numericCols[numericCols.length-1];
+  }
+  function assocScore(rows, col, targetCol, isNumeric){
+    if (isNumeric){
+      var built = buildMatrixNumeric([targetCol, col], rows);
+      if (built.M.length<3) return 0;
+      var xs = built.M.map(function(r){return r[1];}), ys = built.M.map(function(r){return r[0];});
+      return Math.abs(pearson(xs,ys));
+    }
+    return etaSquared(rows, col, targetCol);
+  }
+  function suggestFeaturesFrom(rows, targetCol, numericCols, categoricalCols){
+    if (!targetCol) return [];
+    var scored = [];
+    numericCols.filter(function(c){ return c!==targetCol; }).forEach(function(c){
+      scored.push({name:c, score:assocScore(rows,c,targetCol,true)});
+    });
+    categoricalCols.forEach(function(c){
+      scored.push({name:c, score:assocScore(rows,c,targetCol,false)});
+    });
+    scored.sort(function(a,b){ return b.score-a.score; });
+    return scored.slice(0,4).map(function(s){ return s.name; });
+  }
+
+  /* ============== DATA LOADING ============== */
+  function loadRows(rows){
+    var det = detectColumnsFull(rows);
+    state.rows = rows;
+    state.originalRows = rows.slice();
+    state.columns = det.cols;
+    state.types = det.types;
+    state.numericCols = det.numeric;
+    state.categoricalCols = det.categoricalEligible;
+    state.categoricalAll = det.categorical;
+    state.targetCol = suggestTargetFrom(rows, det.numeric);
+    state.suggestedTarget = state.targetCol;
+    state.featCols = suggestFeaturesFrom(rows, state.targetCol, det.numeric, det.categoricalEligible);
+    state.suggestedFeats = state.featCols.slice();
+    state.scenarioVals = {};
   }
   function onParsed(rows, filename){
     rows = (rows||[]).filter(function(r){ return r && Object.keys(r).length; });
     if (!rows.length){ showStatus('El archivo "'+filename+'" no tiene filas reconocibles.', true); return; }
-    var det = detectColumns(rows);
-    if (det.numeric.length < 2){ showStatus('El archivo "'+filename+'" necesita al menos 2 columnas numéricas (una objetivo y una predictora).', true); return; }
-    state.rows = rows;
-    state.columns = det.cols;
-    state.numericCols = det.numeric.filter(function(c){ return !looksLikeId(c, rows); });
-    if (state.numericCols.length < 2) state.numericCols = det.numeric;
-    state.targetCol = state.numericCols[state.numericCols.length-1];
-    state.featCols = state.numericCols.filter(function(c){ return c!==state.targetCol; }).slice(0,4);
-    state.sliderVals = {};
-    showStatus(rows.length + ' filas cargadas de "'+filename+'" · '+det.numeric.length+' columnas numéricas detectadas.', false);
+    var det = detectColumnsFull(rows);
+    if (det.numeric.length < 1){ showStatus('El archivo "'+filename+'" necesita al menos 1 columna numérica para usarla como variable objetivo.', true); return; }
+    loadRows(rows);
+    showStatus(rows.length + ' filas cargadas de "'+filename+'" · '+det.numeric.length+' columnas numéricas y '+det.categorical.length+' categóricas detectadas.', false);
     renderAll();
   }
   function showStatus(msg, isWarn){
@@ -558,81 +730,217 @@ footer p + p{margin-top:8px;}
       html += '<tr>' + cols.map(function(c){
         var v = r[c];
         if (typeof v === 'number') v = fmtNum(v, 2);
-        return '<td>'+ (v===undefined||v===null||v===''?'<span style="color:var(--muted)">&mdash;</span>':esc(v)) +'</td>';
+        return '<td>'+ (isMissing(v)?'<span style="color:var(--muted)">&mdash;</span>':esc(v)) +'</td>';
       }).join('') + '</tr>';
     });
     html += '</tbody>';
     document.getElementById('headTable').innerHTML = html;
-    document.getElementById('shapeNote').innerHTML = '<b>'+state.rows.length+'</b> filas &times; <b>'+cols.length+'</b> columnas &middot; <b>'+state.numericCols.length+'</b> numéricas.';
+    document.getElementById('shapeNote').innerHTML = '<b>'+state.rows.length+'</b> filas &times; <b>'+cols.length+'</b> columnas &middot; <b>'+state.numericCols.length+'</b> numéricas &middot; <b>'+state.categoricalAll.length+'</b> categóricas.';
     document.getElementById('rowCountNote').textContent = state.rows.length + ' filas';
+  }
+
+  /* ============== RENDER: TYPES TABLE ============== */
+  function renderTypes(){
+    var cols = state.columns;
+    var sample = state.rows[0] || {};
+    var html = '<thead><tr><th>Columna</th><th>Tipo</th><th>Niveles / distinct</th><th>Ejemplo</th><th>Candidata a predictora</th></tr></thead><tbody>';
+    cols.forEach(function(c){
+      var t = state.types[c];
+      var cls = t.numeric ? 'num' : (t.tipo==='Fecha' ? 'date' : 'cat');
+      var ex = sample[c];
+      if (typeof ex === 'number') ex = fmtNum(ex,2);
+      var usable = t.numeric ? 'sí (numérica)' : (state.categoricalCols.indexOf(c)!==-1 ? 'sí (dummy, '+t.distinct+' niveles)' : 'no (cardinalidad '+t.distinct+')');
+      html += '<tr><td class="mono">'+esc(c)+'</td><td><span class="tag '+cls+'">'+t.tipo+' &middot; '+t.sub+'</span></td><td class="mono">'+t.distinct+'</td><td class="mono">'+(ex===undefined?'&mdash;':esc(ex))+'</td><td class="mono" style="font-size:12px;">'+usable+'</td></tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('typesTable').innerHTML = html;
+  }
+
+  /* ============== MISSING DATA ============== */
+  function missingSummary(rows, cols){
+    var n = rows.length;
+    return cols.map(function(c){
+      var missing = rows.filter(function(r){ return isMissing(r[c]); }).length;
+      return {col:c, missing:missing, pct: n ? (100*missing/n) : 0};
+    });
+  }
+  function median(nums){
+    var s = nums.slice().sort(function(a,b){return a-b;});
+    var m = s.length;
+    if (!m) return 0;
+    return m%2 ? s[(m-1)/2] : (s[m/2-1]+s[m/2])/2;
+  }
+  function mode(vals){
+    var counts = {};
+    vals.forEach(function(v){ counts[v] = (counts[v]||0)+1; });
+    var best=null, bestC=-1;
+    Object.keys(counts).forEach(function(k){ if (counts[k]>bestC){ bestC=counts[k]; best=k; } });
+    return best;
+  }
+  function cleanDrop(rows, cols){
+    return rows.filter(function(r){ return cols.every(function(c){ return !isMissing(r[c]); }); });
+  }
+  function cleanImpute(rows, cols, types){
+    var fillVals = {};
+    cols.forEach(function(c){
+      var present = rows.map(function(r){return r[c];}).filter(function(v){ return !isMissing(v); });
+      if (!present.length) { fillVals[c]=null; return; }
+      if (types[c] && types[c].tipo==='Cuantitativa') fillVals[c] = median(present.map(Number));
+      else fillVals[c] = mode(present);
+    });
+    return rows.map(function(r){
+      var copy = Object.assign({}, r);
+      cols.forEach(function(c){
+        if (isMissing(copy[c])) copy[c]=fillVals[c];
+      });
+      return copy;
+    });
+  }
+  function renderMissing(){
+    var cols = state.columns;
+    var sum = missingSummary(state.rows, cols);
+    var totalMissing = sum.reduce(function(a,s){return a+s.missing;},0);
+    var html = '<thead><tr><th>Columna</th><th>Faltantes</th><th>% faltante</th></tr></thead><tbody>';
+    sum.forEach(function(s){
+      html += '<tr><td class="mono">'+esc(s.col)+'</td><td class="mono">'+s.missing+'</td><td class="mono">'+s.pct.toFixed(1)+'%</td></tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('missingTable').innerHTML = html;
+    document.getElementById('cleanStatus').innerHTML = totalMissing===0
+      ? 'Este dataset no tiene valores faltantes (' + state.rows.length + ' filas completas). Si subes tu propio archivo con huecos, los botones de arriba quedan activos para limpiarlos.'
+      : '<b>'+totalMissing+'</b> valores faltantes detectados en total. Usa los botones para eliminarlos o imputarlos.';
   }
 
   /* ============== RENDER: VARIABLE PICKERS ============== */
   function renderVarPickers(){
     var tSel = document.getElementById('targetSelect');
-    tSel.innerHTML = state.numericCols.map(function(c){ return '<option value="'+esc(c)+'"'+(c===state.targetCol?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
+    tSel.innerHTML = state.numericCols.map(function(c){
+      var star = (c===state.suggestedTarget) ? ' ★' : '';
+      return '<option value="'+esc(c)+'"'+(c===state.targetCol?' selected':'')+'>'+esc(c)+star+'</option>';
+    }).join('');
     tSel.onchange = function(){
       state.targetCol = tSel.value;
       state.featCols = state.featCols.filter(function(c){ return c!==state.targetCol; });
-      state.sliderVals = {};
+      state.scenarioVals = {};
       renderAll();
     };
 
     var host = document.getElementById('featChecks');
-    var avail = state.numericCols.filter(function(c){ return c!==state.targetCol; });
+    var avail = state.numericCols.concat(state.categoricalCols).filter(function(c){ return c!==state.targetCol; });
     host.innerHTML = avail.map(function(c){
       var checked = state.featCols.indexOf(c) !== -1;
       var disableNew = (!checked && state.featCols.length>=4);
-      return '<label class="checkrow'+(disableNew?' disabled':'')+'"><input type="checkbox" data-col="'+esc(c)+'" '+(checked?'checked':'')+(disableNew?' disabled':'')+'> <span class="mono" style="font-size:12.5px;">'+esc(c)+'</span></label>';
+      var isCat = state.categoricalCols.indexOf(c)!==-1;
+      var star = (state.suggestedFeats.indexOf(c)!==-1) ? ' <span class="star">★</span>' : '';
+      var tag = '<span class="tag '+(isCat?'cat':'num')+'" style="margin-left:6px;">'+(isCat?'categórica':'numérica')+'</span>';
+      return '<label class="checkrow'+(disableNew?' disabled':'')+'"><input type="checkbox" data-col="'+esc(c)+'" '+(checked?'checked':'')+(disableNew?' disabled':'')+'> <span class="mono" style="font-size:12.5px;">'+esc(c)+'</span>'+star+tag+'</label>';
     }).join('');
     Array.prototype.forEach.call(host.querySelectorAll('input[type=checkbox]'), function(cb){
       cb.addEventListener('change', function(){
         var c = cb.getAttribute('data-col');
         if (cb.checked){ if (state.featCols.length<4) state.featCols.push(c); else { cb.checked=false; return; } }
-        else { state.featCols = state.featCols.filter(function(x){ return x!==c; }); delete state.sliderVals[c]; }
+        else { state.featCols = state.featCols.filter(function(x){ return x!==c; }); delete state.scenarioVals[c]; }
         renderAll();
       });
     });
 
     var note = document.getElementById('varNote');
     if (state.featCols.length === 0) note.innerHTML = 'Elige al menos una variable predictora para ajustar el modelo.';
-    else note.innerHTML = 'Modelo: <b>'+esc(state.targetCol)+' ~ '+state.featCols.map(esc).join(' + ')+'</b> &middot; n = '+state.rows.length+', '+state.featCols.length+' predictora(s).';
+    else note.innerHTML = 'Candidatas elegidas: <b>'+esc(state.targetCol)+' ~ '+state.featCols.map(esc).join(' + ')+'</b> &middot; n = '+state.rows.length+', '+state.featCols.length+' predictora(s) &mdash; el paso 6 compara todas sus combinaciones.';
   }
 
-  /* ============== BUILD DESIGN MATRIX ============== */
-  function numericValue(v){ var n = (typeof v==='number')?v:parseFloat(v); return isFinite(n)?n:null; }
-  function buildMatrix(cols){
+  /* ============== DESIGN MATRIX (numérica + dummy) ============== */
+  function termType(name){ return state.categoricalCols.indexOf(name)!==-1 ? 'categorical' : 'numeric'; }
+  function designMeta(rows, terms){
+    return terms.map(function(name){
+      if (termType(name)==='numeric'){
+        var vals = rows.map(function(r){ return numericValue(r[name]); }).filter(function(v){ return v!==null; });
+        return { name:name, type:'numeric', range:{min:Math.min.apply(null,vals), max:Math.max.apply(null,vals), mean: vals.reduce(function(a,b){return a+b;},0)/(vals.length||1)} };
+      }
+      var levels = Array.from(new Set(rows.map(function(r){ return String(r[name]); }))).sort();
+      var counts = {};
+      rows.forEach(function(r){ var k=String(r[name]); counts[k]=(counts[k]||0)+1; });
+      var defaultLevel = levels.slice().sort(function(a,b){ return (counts[b]||0)-(counts[a]||0); })[0];
+      return { name:name, type:'categorical', baseline:levels[0], rest:levels.slice(1), levels:levels, defaultLevel:defaultLevel };
+    });
+  }
+  function expandRow(r, meta){
+    var out=[];
+    meta.forEach(function(m){
+      if (m.type==='numeric') out.push(numericValue(r[m.name]));
+      else m.rest.forEach(function(l){ out.push(String(r[m.name])===l?1:0); });
+    });
+    return out;
+  }
+  function expandNames(meta){
+    var out=[];
+    meta.forEach(function(m){
+      if (m.type==='numeric') out.push(m.name);
+      else m.rest.forEach(function(l){ out.push(m.name+'='+l); });
+    });
+    return out;
+  }
+  function rebuildFit(terms){
+    if (!terms || !terms.length || !state.targetCol) return null;
     var rows = state.rows.filter(function(r){
-      return cols.every(function(c){ return numericValue(r[c])!==null; });
+      return !isMissing(r[state.targetCol]) && numericValue(r[state.targetCol])!==null &&
+        terms.every(function(t){ return !isMissing(r[t]); });
     });
-    var M = rows.map(function(r){ return cols.map(function(c){ return numericValue(r[c]); }); });
-    return {M:M, rows:rows};
+    if (rows.length < terms.length+3) return null;
+    var meta = designMeta(rows, terms);
+    var X = rows.map(function(r){ return expandRow(r, meta); });
+    var y = rows.map(function(r){ return numericValue(r[state.targetCol]); });
+    var fit = fitOLS(X,y);
+    if (!fit) return null;
+    fit.meta = meta;
+    fit.names = expandNames(meta);
+    fit.terms = terms;
+    return fit;
   }
 
-  /* ============== RENDER: CORRELATION + VIF ============== */
-  function renderCorrelation(){
-    var cols = [state.targetCol].concat(state.featCols);
-    var built = buildMatrix(cols);
-    var M = built.M;
-    var html = '<thead><tr><th></th>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
-    cols.forEach(function(ci,i){
-      html += '<tr><th>'+esc(ci)+'</th>' + cols.map(function(cj,j){
-        var xs = M.map(function(row){return row[i];}), ys = M.map(function(row){return row[j];});
-        var r = pearson(xs,ys);
-        var strong = Math.abs(r)>=0.6 && i!==j;
-        return '<td class="mono" style="'+(strong?'font-weight:700;color:var(--accent-strong);':'')+'">'+r.toFixed(2)+'</td>';
-      }).join('') + '</tr>';
-    });
-    html += '</tbody>';
-    document.getElementById('corrTable').innerHTML = html;
+  /* ============== RENDER: AED (asociación, correlación, VIF, reglas de negocio) ============== */
+  function renderAED(){
+    var assocHost = document.getElementById('assocTable');
+    if (!state.targetCol){ assocHost.innerHTML=''; }
+    else {
+      var cands = state.numericCols.concat(state.categoricalCols).filter(function(c){ return c!==state.targetCol; });
+      var rowsHtml = cands.map(function(c){
+        var isCat = state.categoricalCols.indexOf(c)!==-1;
+        var score = assocScore(state.rows, c, state.targetCol, !isCat);
+        var sug = state.suggestedFeats.indexOf(c)!==-1 ? '<span class="star">&#9733;</span>' : '';
+        var chosen = state.featCols.indexOf(c)!==-1 ? ' &middot; elegida' : '';
+        return '<tr><td class="mono">'+esc(c)+'</td><td><span class="tag '+(isCat?'cat':'num')+'">'+(isCat?'categórica (&eta;&sup2;)':'numérica (Pearson r)')+'</span></td><td class="mono">'+score.toFixed(3)+'</td><td>'+sug+chosen+'</td></tr>';
+      }).join('');
+      assocHost.innerHTML = '<thead><tr><th>Variable</th><th>Tipo / medida</th><th>Fuerza</th><th>Nota</th></tr></thead><tbody>'+rowsHtml+'</tbody>';
+    }
+
+    var numFeats = state.featCols.filter(function(c){ return state.numericCols.indexOf(c)!==-1; });
+    var corrCols = state.targetCol ? [state.targetCol].concat(numFeats) : numFeats;
+    var corrHost = document.getElementById('corrTable');
+    if (corrCols.length<2){
+      corrHost.innerHTML = '<thead><tr><th></th></tr></thead><tbody><tr><td class="mono" style="color:var(--muted);">Se necesitan al menos 2 variables numéricas (objetivo + una predictora numérica) para la matriz de correlación.</td></tr></tbody>';
+    } else {
+      var built = buildMatrixNumeric(corrCols);
+      var M = built.M;
+      var html = '<thead><tr><th></th>'+corrCols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+      corrCols.forEach(function(ci,i){
+        html += '<tr><th>'+esc(ci)+'</th>' + corrCols.map(function(cj,j){
+          var xs = M.map(function(row){return row[i];}), ys = M.map(function(row){return row[j];});
+          var r = pearson(xs,ys);
+          var strong = Math.abs(r)>=0.6 && i!==j;
+          return '<td class="mono" style="'+(strong?'font-weight:700;color:var(--accent-strong);':'')+'">'+r.toFixed(2)+'</td>';
+        }).join('') + '</tr>';
+      });
+      html += '</tbody>';
+      corrHost.innerHTML = html;
+    }
 
     var vifHtml = '<thead><tr><th>Predictora</th><th>VIF</th><th>Lectura</th></tr></thead><tbody>';
-    if (state.featCols.length < 2){
-      vifHtml += '<tr><td colspan="3" class="mono" style="color:var(--muted);">Se necesitan al menos 2 predictoras para calcular VIF.</td></tr>';
+    if (numFeats.length < 2){
+      vifHtml += '<tr><td colspan="3" class="mono" style="color:var(--muted);">Se necesitan al menos 2 predictoras numéricas elegidas para calcular VIF (las categóricas no entran en este cálculo).</td></tr>';
     } else {
-      var fcols = [state.targetCol].concat(state.featCols);
-      var builtF = buildMatrix(state.featCols);
-      state.featCols.forEach(function(c,j){
+      var builtF = buildMatrixNumeric(numFeats);
+      numFeats.forEach(function(c,j){
         var v = vifOf(builtF.M, j);
         var read = v===Infinity ? 'Colinealidad perfecta' : (v>10?'Grave':(v>5?'Alerta':'Aceptable'));
         var color = v===Infinity||v>10 ? 'var(--bad)' : (v>5?'var(--warn)':'var(--good)');
@@ -641,55 +949,104 @@ footer p + p{margin-top:8px;}
     }
     vifHtml += '</tbody>';
     document.getElementById('vifTable').innerHTML = vifHtml;
+
+    document.getElementById('businessRulesHost').innerHTML =
+      '<p><b>Reglas de negocio que deja ver el AED:</b></p>' +
+      '<p style="margin-top:8px;">En la bitácora de Tu Idea en 3D, la inversión en publicidad y los nuevos seguidores en redes anticipan más <em>Consultas_recibidas</em> &mdash; y son esas consultas, no la inversión en sí, las que terminan convirtiéndose en pedidos e ingresos. Por eso en el paso 6 suele ganar un modelo con pocas variables: el canal (Instagram/TikTok/WhatsApp Business) añade matices &mdash; cada canal trae una mezcla distinta de clientes y tasa de conversión &mdash; pero el motor principal de ingresos sigue siendo el volumen de consultas que de verdad llegan.</p>' +
+      '<p style="margin-top:8px;">Para el negocio esto sugiere invertir en lo que mueve la aguja más corta de la cadena (generar consultas de calidad) en vez de optimizar solo el gasto publicitario bruto, y monitorear el canal principal como palanca secundaria, no como la variable que por sí sola explica el resultado.</p>';
   }
 
-  /* ============== FIT + RENDER MODEL ============== */
-  function rebuildFit(){
-    if (state.featCols.length === 0){ state.fit = null; return; }
-    var cols = state.featCols.concat([state.targetCol]);
-    var built = buildMatrix(cols);
-    var M = built.M;
-    if (M.length < state.featCols.length + 3){ state.fit = null; return; }
-    var X = M.map(function(row){ return row.slice(0, state.featCols.length); });
-    var y = M.map(function(row){ return row[row.length-1]; });
-    var fit = fitOLS(X,y);
-    if (fit){
-      fit.featRanges = state.featCols.map(function(c,j){
-        var vals = X.map(function(row){ return row[j]; });
-        return {min:Math.min.apply(null,vals), max:Math.max.apply(null,vals), mean:vals.reduce(function(a,b){return a+b;},0)/vals.length};
-      });
+  /* ============== BEST SUBSET SEARCH ============== */
+  function subsetsOf(arr){
+    var n = arr.length, out=[];
+    for (var mask=1; mask<(1<<n); mask++){
+      var s=[];
+      for (var i=0;i<n;i++) if (mask & (1<<i)) s.push(arr[i]);
+      out.push(s);
     }
-    state.fit = fit;
+    return out;
+  }
+  function evalFit(fit){
+    var r2 = 1-fit.ssRes/fit.ssTot;
+    var r2adj = 1-(1-r2)*(fit.n-1)/fit.df;
+    var rmse = Math.sqrt(fit.ssRes/fit.n);
+    var fstat = ((fit.ssTot-fit.ssRes)/fit.k)/(fit.ssRes/fit.df);
+    var pF = fUpperP(fstat, fit.k, fit.df);
+    return {r2:r2, r2adj:r2adj, rmse:rmse, fstat:fstat, pF:pF};
+  }
+  function renderSubsetSearch(){
+    var host = document.getElementById('subsetTable');
+    var note = document.getElementById('subsetNote');
+    if (!state.featCols.length || !state.targetCol){
+      host.innerHTML = '<thead><tr><th></th></tr></thead><tbody><tr><td class="mono" style="color:var(--muted);">Elige al menos una predictora en el paso 4.</td></tr></tbody>';
+      note.innerHTML = '';
+      state.subsetResults = []; state.winningTerms = []; state.fit = null;
+      return;
+    }
+    var subsets = subsetsOf(state.featCols);
+    var results = [];
+    subsets.forEach(function(terms){
+      var fit = rebuildFit(terms);
+      if (!fit) return;
+      var ev = evalFit(fit);
+      results.push({terms:terms, fit:fit, ev:ev});
+    });
+    results.sort(function(a,b){ return b.ev.r2adj - a.ev.r2adj; });
+    state.subsetResults = results;
+    if (!results.length){
+      host.innerHTML = '<thead><tr><th></th></tr></thead><tbody><tr><td class="mono" style="color:var(--muted);">No hay suficientes filas completas para ajustar ningún modelo con las predictoras elegidas.</td></tr></tbody>';
+      note.innerHTML = '';
+      state.winningTerms = []; state.fit = null;
+      return;
+    }
+    var winner = results[0];
+    state.winningTerms = winner.terms;
+    state.fit = winner.fit;
+
+    var html = '<thead><tr><th>Modelo (términos)</th><th># columnas</th><th>R&sup2;</th><th>R&sup2; ajustado</th><th>RMSE</th><th>F</th><th>p-valor</th><th></th></tr></thead><tbody>';
+    results.forEach(function(res){
+      var isWinner = res===winner;
+      html += '<tr'+(isWinner?' class="winner"':'')+'><td class="mono">'+res.terms.map(esc).join(' + ')+'</td>'+
+        '<td class="mono">'+res.fit.k+'</td>'+
+        '<td class="mono">'+res.ev.r2.toFixed(3)+'</td>'+
+        '<td class="mono">'+res.ev.r2adj.toFixed(3)+'</td>'+
+        '<td class="mono">'+fmtNum(res.ev.rmse,0)+'</td>'+
+        '<td class="mono">'+res.ev.fstat.toFixed(2)+'</td>'+
+        '<td class="mono">'+(res.ev.pF<0.001?'<0.001':res.ev.pF.toFixed(3))+'</td>'+
+        '<td>'+(isWinner?'<span class="badge-winner">&#9733; mejor modelo</span>':'')+'</td></tr>';
+    });
+    html += '</tbody>';
+    host.innerHTML = html;
+    note.innerHTML = 'Criterio de selección: <b>mayor R&sup2; ajustado</b> entre las '+results.length+' combinaciones posibles de {'+state.featCols.map(esc).join(', ')+'}. El modelo ganador usa <b>'+winner.terms.map(esc).join(' + ')+'</b> (R&sup2; ajustado = '+winner.ev.r2adj.toFixed(3)+') &mdash; '+(winner.terms.length<state.featCols.length ? 'menos variables que el conjunto completo, porque las que se dejan fuera no mejoraban el ajuste lo suficiente para justificar la complejidad adicional.' : 'el conjunto completo resultó ser, en efecto, el mejor balance disponible.')+'</span>';
   }
 
+  /* ============== RENDER: MODELO GANADOR (fórmula y coeficientes) ============== */
   function renderModel(){
     var fit = state.fit;
     var eqnBox = document.getElementById('eqnBox');
     var metricHost = document.getElementById('metricCards');
     var coefHost = document.getElementById('coefTable');
     if (!fit){
-      eqnBox.textContent = 'Elige al menos una variable predictora arriba para ajustar el modelo.';
+      eqnBox.textContent = 'Elige al menos una variable predictora y espera a que el paso 6 elija un modelo.';
       metricHost.innerHTML = ''; coefHost.innerHTML = '';
+      var bn = document.getElementById('coefBaselineNote'); bn.innerHTML=''; bn.style.display='none';
       return;
     }
-    eqnBox.textContent = state.targetCol + ' = ' + fit.beta[0].toFixed(2) + state.featCols.map(function(c,j){
+    eqnBox.textContent = state.targetCol + ' = ' + fit.beta[0].toFixed(2) + fit.names.map(function(nm,j){
       var b = fit.beta[j+1];
-      return (b>=0?' + ':' − ') + Math.abs(b).toFixed(4) + '·' + c;
+      return (b>=0?' + ':' − ') + Math.abs(b).toFixed(4) + '·' + nm;
     }).join('') + '   (n='+fit.n+', todos los datos)';
 
-    var r2 = 1-fit.ssRes/fit.ssTot;
-    var r2adj = 1-(1-r2)*(fit.n-1)/fit.df;
-    var fstat = ((fit.ssTot-fit.ssRes)/fit.k) / (fit.ssRes/fit.df);
-    var pF = fUpperP(fstat, fit.k, fit.df);
+    var ev = evalFit(fit);
     metricHost.innerHTML = [
-      {v:r2.toFixed(3), l:'R²'},
-      {v:r2adj.toFixed(3), l:'R² ajustado'},
-      {v:fstat.toFixed(2), l:'F-statistic'},
-      {v:(pF<0.001?'<0.001':pF.toFixed(3)), l:'p-valor del modelo'}
-    ].map(function(m){ return '<div class="metric"><div class="val">'+m.v+'</div><div class="lab">'+m.l+'</div></div>'; }).join('');
+      {v:ev.r2.toFixed(3), l:'R²'},
+      {v:ev.r2adj.toFixed(3), l:'R² ajustado'},
+      {v:fmtNum(ev.rmse,0), l:'RMSE'},
+      {v:ev.fstat.toFixed(2)+' (p'+(ev.pF<0.001?'<0.001':'='+ev.pF.toFixed(3))+')', l:'F-statistic'}
+    ].map(function(m){ return '<div class="metric"><div class="val" style="font-size:20px;">'+m.v+'</div><div class="lab">'+m.l+'</div></div>'; }).join('');
 
     var rows = '<thead><tr><th>Variable</th><th>Coef.</th><th>Error Est.</th><th>t</th><th>p-valor</th><th>Significancia</th></tr></thead><tbody>';
-    var names = ['Intercepto'].concat(state.featCols);
+    var names = ['Intercepto'].concat(fit.names);
     names.forEach(function(nm,j){
       var b = fit.beta[j], se = fit.se[j], t = b/se, p = tTwoSidedP(Math.abs(t), fit.df);
       var sig = p<0.05;
@@ -697,6 +1054,15 @@ footer p + p{margin-top:8px;}
     });
     rows += '</tbody>';
     coefHost.innerHTML = rows;
+    var baselineNote = document.getElementById('coefBaselineNote');
+    var catTerms = fit.meta.filter(function(m){ return m.type==='categorical'; });
+    if (catTerms.length){
+      baselineNote.innerHTML = 'Nivel base de cada categórica (coeficiente cero por definición): '+catTerms.map(function(m){ return '<b>'+esc(m.name)+'</b> = '+esc(m.baseline); }).join(', ')+'.';
+      baselineNote.style.display = '';
+    } else {
+      baselineNote.innerHTML = '';
+      baselineNote.style.display = 'none';
+    }
   }
 
   /* ============== DIAGNOSTICS ============== */
@@ -820,25 +1186,33 @@ footer p + p{margin-top:8px;}
   function renderSliders(){
     var host = document.getElementById('sliderHost');
     var fit = state.fit;
-    if (!fit){ host.innerHTML = '<p class="note">Ajusta el modelo primero (elige al menos una predictora).</p>'; return; }
+    if (!fit){ host.innerHTML = '<p class="note">Ajusta el modelo primero (elige al menos una predictora en el paso 4).</p>'; return; }
     var html = '';
-    state.featCols.forEach(function(c,j){
-      var rg = fit.featRanges[j];
-      if (!(c in state.sliderVals)) state.sliderVals[c] = rg.mean;
-      var val = state.sliderVals[c];
-      var span = (rg.max-rg.min) || 1;
-      var lo = rg.min - span*0.3, hi = rg.max + span*0.3;
-      html += '<div class="slider-row"><div class="sr-top"><span class="sr-name">'+esc(c)+'</span><span class="sr-val mono" id="srv-'+j+'">'+fmtNum(val,0)+'</span></div>' +
-        '<input type="range" min="'+lo+'" max="'+hi+'" step="'+(span/200)+'" value="'+val+'" data-idx="'+j+'">' +
-        '<div class="sr-range"><span>rango observado: '+fmtNum(rg.min,0)+'</span><span>'+fmtNum(rg.max,0)+'</span></div></div>';
+    fit.meta.forEach(function(m){
+      if (m.type==='numeric'){
+        if (!(m.name in state.scenarioVals) || typeof state.scenarioVals[m.name]!=='number') state.scenarioVals[m.name] = m.range.mean;
+        var val = state.scenarioVals[m.name];
+        var span = (m.range.max-m.range.min) || 1;
+        var lo = m.range.min - span*0.3, hi = m.range.max + span*0.3;
+        html += '<div class="slider-row"><div class="sr-top"><span class="sr-name">'+esc(m.name)+'</span><span class="sr-val mono" id="srv-'+esc(m.name)+'">'+fmtNum(val,0)+'</span></div>' +
+          '<input type="range" min="'+lo+'" max="'+hi+'" step="'+(span/200)+'" value="'+val+'" data-col="'+esc(m.name)+'">' +
+          '<div class="sr-range"><span>rango observado: '+fmtNum(m.range.min,0)+'</span><span>'+fmtNum(m.range.max,0)+'</span></div>' +
+          '<div class="sr-how">Escenario generado deslizando sobre el rango histórico &plusmn;30% (ruta: datos observados &rarr; mín/máx &rarr; margen).</div></div>';
+      } else {
+        if (!(m.name in state.scenarioVals) || typeof state.scenarioVals[m.name]!=='string') state.scenarioVals[m.name] = m.defaultLevel;
+        var sel = state.scenarioVals[m.name];
+        html += '<div class="slider-row"><div class="sr-top"><span class="sr-name">'+esc(m.name)+'</span></div>' +
+          '<select data-col="'+esc(m.name)+'">' + m.levels.map(function(l){ return '<option value="'+esc(l)+'"'+(l===sel?' selected':'')+'>'+esc(l)+(l===m.baseline?' (base)':'')+'</option>'; }).join('') + '</select>' +
+          '<div class="sr-how">Escenario generado eligiendo entre los niveles observados en los datos (ruta: categoría &rarr; nivel más frecuente como valor por defecto).</div></div>';
+      }
     });
     host.innerHTML = html;
-    Array.prototype.forEach.call(host.querySelectorAll('input[type=range]'), function(sl){
-      sl.addEventListener('input', function(){
-        var j = +sl.getAttribute('data-idx');
-        var c = state.featCols[j];
-        state.sliderVals[c] = parseFloat(sl.value);
-        document.getElementById('srv-'+j).textContent = fmtNum(state.sliderVals[c],0);
+    Array.prototype.forEach.call(host.querySelectorAll('[data-col]'), function(el){
+      var evt = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(evt, function(){
+        var c = el.getAttribute('data-col');
+        if (el.tagName === 'SELECT'){ state.scenarioVals[c] = el.value; }
+        else { state.scenarioVals[c] = parseFloat(el.value); var disp=document.getElementById('srv-'+c); if (disp) disp.textContent = fmtNum(state.scenarioVals[c],0); }
         renderPrediction();
       });
     });
@@ -848,7 +1222,9 @@ footer p + p{margin-top:8px;}
     var fit = state.fit;
     var box = document.getElementById('predBox');
     if (!fit){ box.innerHTML=''; return; }
-    var x0 = [1].concat(state.featCols.map(function(c){ return state.sliderVals[c]; }));
+    var fakeRow = {};
+    fit.meta.forEach(function(m){ fakeRow[m.name] = state.scenarioVals[m.name]; });
+    var x0 = [1].concat(expandRow(fakeRow, fit.meta));
     var pred = x0.reduce(function(s,v,j){ return s+v*fit.beta[j]; },0);
     var XtXinv = fit.XtXinv;
     var qf = 0;
@@ -856,37 +1232,52 @@ footer p + p{margin-top:8px;}
     var seMean = Math.sqrt(Math.max(fit.mse*qf,0));
     var seObs = Math.sqrt(Math.max(fit.mse*(1+qf),0));
     var tc = tCrit(0.05, fit.df);
-    var outOfRange = state.featCols.some(function(c,j){ var rg=fit.featRanges[j]; var v=state.sliderVals[c]; return v<rg.min || v>rg.max; });
+    var outOfRange = fit.meta.some(function(m){
+      if (m.type!=='numeric') return false;
+      var v = state.scenarioVals[m.name];
+      return v<m.range.min || v>m.range.max;
+    });
 
     box.innerHTML =
       '<div class="pv">'+fmtNum(pred,0)+'</div>' +
       '<div class="pl">Predicción de '+esc(state.targetCol)+'</div>' +
       '<div class="pi">IC 95% de la media: ['+fmtNum(pred-tc*seMean,0)+' , '+fmtNum(pred+tc*seMean,0)+']</div>' +
       '<div class="pi">Intervalo de predicción 95%: ['+fmtNum(pred-tc*seObs,0)+' , '+fmtNum(pred+tc*seObs,0)+']</div>' +
-      (outOfRange ? '<div class="note warn" style="margin-top:12px;text-align:left;">⚠ Al menos un valor está <b>fuera del rango histórico</b> observado en los datos — esto es extrapolación: trata la predicción como tendencia, no como cifra exacta.</div>' : '');
+      (outOfRange ? '<div class="note warn" style="margin-top:12px;text-align:left;">⚠ Al menos un valor numérico está <b>fuera del rango histórico</b> observado en los datos — esto es extrapolación: trata la predicción como tendencia, no como cifra exacta.</div>' : '');
   }
 
-  /* ============== INTERPRETATION ============== */
+  /* ============== RECOMENDACIONES DE NEGOCIO ============== */
   function renderInterpretation(){
     var fit = state.fit;
     var host = document.getElementById('interpretHost');
-    if (!fit){ host.innerHTML='<p class="note">Ajusta el modelo primero.</p>'; return; }
-    var r2 = 1-fit.ssRes/fit.ssTot;
-    var sigVars = [], nosigVars = [];
-    state.featCols.forEach(function(c,j){
+    if (!fit){ host.innerHTML='<p class="note">Ajusta el modelo primero (pasos 4 a 6).</p>'; return; }
+    var ev = evalFit(fit);
+    var sigTerms = [], nosigTerms = [];
+    fit.names.forEach(function(nm,j){
       var b = fit.beta[j+1], se = fit.se[j+1], t=b/se, p=tTwoSidedP(Math.abs(t),fit.df);
-      if (p<0.05) sigVars.push({c:c,b:b}); else nosigVars.push(c);
+      if (p<0.05) sigTerms.push({nm:nm,b:b}); else nosigTerms.push(nm);
     });
-    var html = '<p>El modelo explica el <b>'+(r2*100).toFixed(1)+'%</b> de la variación en <b>'+esc(state.targetCol)+'</b>.</p>';
-    if (sigVars.length){
-      html += '<p style="margin-top:10px;">Las variables con <b>evidencia estadística sólida</b> (p&lt;0.05) son: ' +
-        sigVars.map(function(v){ return '<b>'+esc(v.c)+'</b> ('+(v.b>=0?'efecto positivo':'efecto negativo')+')'; }).join(', ') + '.</p>';
+    var html = '<p><b>Pregunta de negocio:</b> ¿qué variables explican y permiten anticipar <em>'+esc(state.targetCol)+'</em> en Tu Idea en 3D, y en qué conviene enfocar el esfuerzo del próximo mes?</p>';
+    html += '<p style="margin-top:10px;">El modelo ganador ('+fit.terms.map(esc).join(' + ')+') explica el <b>'+(ev.r2*100).toFixed(1)+'%</b> de la variación en <b>'+esc(state.targetCol)+'</b> (R&sup2; ajustado '+ev.r2adj.toFixed(3)+', RMSE &asymp; '+fmtNum(ev.rmse,0)+').</p>';
+    if (sigTerms.length){
+      html += '<p style="margin-top:10px;"><b>Recomendaciones por variable con evidencia estadística sólida (p&lt;0.05):</b></p><ul style="margin:8px 0 0 18px; padding:0;">';
+      sigTerms.forEach(function(v){
+        var isDummy = v.nm.indexOf('=')!==-1;
+        if (isDummy){
+          var parts = v.nm.split('=');
+          html += '<li style="margin-bottom:6px;">Los meses con <b>'+esc(parts[0])+' = '+esc(parts[1])+'</b> se asocian, en promedio, con '+(v.b>=0?'+':'−')+fmtNum(Math.abs(v.b),0)+' en '+esc(state.targetCol)+' frente al nivel base, manteniendo las demás variables constantes — vale la pena vigilar ese canal/categoría como palanca, sin tratarlo como la única explicación.</li>';
+        } else {
+          html += '<li style="margin-bottom:6px;">Cada unidad adicional de <b>'+esc(v.nm)+'</b> se asocia con '+(v.b>=0?'un aumento':'una caída')+' de aproximadamente <b>'+fmtNum(Math.abs(v.b),2)+'</b> en '+esc(state.targetCol)+' (manteniendo lo demás constante) — es razonable priorizar inversión u operación sobre esta variable antes que sobre una no significativa.</li>';
+        }
+      });
+      html += '</ul>';
     } else {
-      html += '<p style="margin-top:10px;">Ninguna variable individual alcanza significancia estadística (p&lt;0.05) con estos datos — el modelo en conjunto puede ser útil, pero no hay que apoyarse en un solo coeficiente.</p>';
+      html += '<p style="margin-top:10px;">Ninguna variable individual alcanza significancia estadística (p&lt;0.05) con estos datos — el modelo en conjunto puede ser útil para pronosticar, pero no conviene apoyar una decisión de negocio en un solo coeficiente.</p>';
     }
-    if (nosigVars.length){
-      html += '<p style="margin-top:10px;">'+nosigVars.map(esc).join(', ')+' muestra(n) relación con '+esc(state.targetCol)+' en los datos, pero <b>no es concluyente</b> con este tamaño de muestra — no la uses como única base de una decisión.</p>';
+    if (nosigTerms.length){
+      html += '<p style="margin-top:10px;">'+nosigTerms.map(esc).join(', ')+' queda(n) en el modelo pero <b>no es concluyente</b> con este tamaño de muestra — no la uses como única base de una decisión, y considera recolectar más datos antes de descartarla o confiar en ella del todo.</p>';
     }
+    html += '<p style="margin-top:10px;" class="note">Recuerda: esto es <b>correlación observacional</b>, no un experimento controlado — antes de mover presupuesto con base en estos coeficientes, conviene validar con una prueba controlada (p. ej. variar el gasto en un canal y medir el efecto) cuando el negocio lo permita.</p>';
     host.innerHTML = html;
   }
 
@@ -901,22 +1292,34 @@ footer p + p{margin-top:8px;}
     if (e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]);
   });
   document.getElementById('btnRestore').addEventListener('click', function(){
-    state.rows = EMBEDDED.slice();
-    state.columns = ['Mes','Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'];
-    state.numericCols = ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas','Ingresos_mensuales'];
-    state.targetCol = 'Ingresos_mensuales';
-    state.featCols = ['Inversion_publicidad','Seguidores_nuevos','Consultas_recibidas'];
-    state.sliderVals = {};
+    loadRows(EMBEDDED.slice());
     showStatus('Bitácora de ejemplo restaurada.', false);
+    renderAll();
+  });
+  document.getElementById('btnCleanDrop').addEventListener('click', function(){
+    state.rows = cleanDrop(state.rows, state.columns);
+    document.getElementById('cleanStatus').innerHTML = 'Filas tras eliminar faltantes: <b>'+state.rows.length+'</b> (de '+state.originalRows.length+').';
+    renderAll();
+  });
+  document.getElementById('btnCleanImpute').addEventListener('click', function(){
+    state.rows = cleanImpute(state.rows, state.columns, state.types);
+    document.getElementById('cleanStatus').innerHTML = 'Valores faltantes imputados con mediana (numéricas) o moda (categóricas) sobre '+state.rows.length+' filas.';
+    renderAll();
+  });
+  document.getElementById('btnCleanReset').addEventListener('click', function(){
+    state.rows = state.originalRows.slice();
+    document.getElementById('cleanStatus').innerHTML = 'Datos restaurados ('+state.rows.length+' filas).';
     renderAll();
   });
 
   /* ============== MAIN RENDER ============== */
   function renderAll(){
     renderHead();
+    renderTypes();
+    renderMissing();
     renderVarPickers();
-    renderCorrelation();
-    rebuildFit();
+    renderAED();
+    renderSubsetSearch();
     renderModel();
     renderDiagnostics();
     renderSliders();
@@ -929,6 +1332,7 @@ footer p + p{margin-top:8px;}
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ renderDiagnostics(); });
   }
 
+  loadRows(EMBEDDED.slice());
   renderAll();
 })();
 </script>
