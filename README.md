@@ -21,7 +21,7 @@ Cinco páginas web independientes (HTML + CSS + JS, sin backend) del trabajo
   qué variables; árbol de decisión (CART, impureza de Gini) con
   profundidad y tamaño de hoja ajustables, matriz de confusión sobre un
   30% de datos de prueba, importancia de variables y un simulador de
-  predicción con el camino completo por el árbol.
+  predicción con el camino completo por el árbol. Viene precargado con 9.240 leads reales del dataset Lead Scoring de Kaggle (no son datos de Tu Idea en 3D; ver sección 11 del documento CRISP-DM).
 
 No necesitan servidor ni build: son archivos estáticos, se abren tal cual
 en el navegador y también se pueden desplegar directo en Vercel, Netlify,
